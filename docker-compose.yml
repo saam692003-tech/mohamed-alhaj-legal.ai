@@ -1,0 +1,33 @@
+services:
+  legal-ai:
+    build: .
+    container_name: legal-ai
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/data/legal_library.db
+    volumes:
+      - legal_data:/app/data
+    restart: unless-stopped
+
+  legal-ai-weekly:
+    build: .
+    container_name: legal-ai-weekly
+    command: ["python", "backend/weekly_worker.py"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/data/legal_library.db
+      SCHEDULE_TIMEZONE: Asia/Aden
+      CRAWL_MAX_PAGES: "700"
+      CRAWL_DELAY: "1.2"
+    volumes:
+      - legal_data:/app/data
+    restart: unless-stopped
+    depends_on:
+      - legal-ai
+
+volumes:
+  legal_data:

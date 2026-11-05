@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOHAMED AL-HAJJ LEGAL AI</title>
+<style>
+:root{--navy:#14283f;--navy2:#1d3b59;--gold:#b89555;--bg:#f3f5f8;--card:#fff;--text:#1c2936;--muted:#718096;--line:#e5eaf0;--green:#21856b}
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea,select{font:inherit}.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--navy);color:#fff;padding:24px 16px;display:flex;flex-direction:column;gap:22px}
+.brand{padding:4px 10px 20px;border-bottom:1px solid #ffffff24}.brand-mark{width:42px;height:42px;border:2px solid var(--gold);border-radius:12px;display:grid;place-items:center;color:var(--gold);font-weight:bold;font-size:20px;margin-bottom:12px}
+.brand h1{font-size:15px;line-height:1.7;margin:0;letter-spacing:.3px}.brand p{font-size:11px;color:#c4cfda;margin:4px 0 0}
+.nav-label{font-size:10px;color:#91a4b8;padding:0 12px;margin:0 0 8px}.nav button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:#d8e1e9;text-align:right;padding:12px;border-radius:9px;cursor:pointer;font-size:13px;margin:3px 0}
+.nav button:hover,.nav button.active{background:#ffffff17;color:#fff}.nav .ico{width:20px;text-align:center;color:var(--gold);font-size:16px}
+.sidebar-foot{margin-top:auto;border-top:1px solid #ffffff24;padding:16px 10px;color:#b9c7d4;font-size:11px;line-height:1.8}
+.main{flex:1;min-width:0}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 32px;gap:15px}
+.top-title{font-size:17px;font-weight:bold}.top-sub{font-size:11px;color:var(--muted);margin-top:5px}.user{display:flex;align-items:center;gap:10px;font-size:12px}.avatar{width:36px;height:36px;border-radius:50%;background:#e9dfcc;color:#6c5125;display:grid;place-items:center;font-weight:bold}
+.content{padding:28px 32px;max-width:1500px;margin:auto}.welcome{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:24px}.welcome h2{margin:0 0 8px;font-size:23px}.welcome p{margin:0;color:var(--muted);font-size:13px;line-height:1.8}
+.btn{border:0;border-radius:8px;padding:11px 16px;background:var(--navy2);color:white;cursor:pointer;font-size:12px}.btn.gold{background:var(--gold);color:#182536}.btn.light{background:#eef2f6;color:var(--navy)}.btn:hover{filter:brightness(1.06)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}.stat,.panel,.quick{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #1a2c3d08}
+.stat{padding:18px}.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.stat-icon{width:34px;height:34px;border-radius:9px;background:#f4efe5;color:#9b793c;display:grid;place-items:center;font-size:17px}.stat strong{display:block;font-size:25px;margin:13px 0 4px}.stat small{color:var(--muted);font-size:10px}
+.two{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:18px}.panel{padding:20px}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.panel h3{font-size:14px;margin:0}.muted{font-size:11px;color:var(--muted)}
+.searchbox{display:flex;gap:8px;background:#f7f9fb;border:1px solid var(--line);padding:8px;border-radius:9px}.searchbox input{flex:1;border:0;outline:0;background:transparent;padding:7px;font-size:12px}
+.quickgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick{padding:15px;text-align:right;cursor:pointer;border:1px solid var(--line);color:var(--text)}.quick:hover{border-color:var(--gold);transform:translateY(-1px)}.quick b{display:block;font-size:12px;margin:7px 0}.quick span{font-size:19px;color:var(--gold)}.quick small{font-size:10px;color:var(--muted)}
+.activity{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:12px}.activity:last-child{border:0}.dot{width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:5px;flex:none}.activity small{display:block;color:var(--muted);margin-top:5px;font-size:10px}
+.page{display:none}.page.active{display:block}.section-title{margin:0 0 7px;font-size:21px}.section-desc{color:var(--muted);font-size:12px;margin:0 0 20px;line-height:1.8}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.feature{background:#fff;border:1px solid var(--line);border-radius:12px;padding:19px}.feature .big{font-size:22px;color:var(--gold)}.feature h3{font-size:13px;margin:10px 0 7px}.feature p{font-size:11px;color:var(--muted);line-height:1.8;margin:0}
+.tablewrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:600px}th,td{text-align:right;padding:13px 15px;border-bottom:1px solid var(--line);font-size:11px}th{background:#f7f9fb;color:#526273}td a{color:#315c80;text-decoration:none}
+.chatbox{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}.chat-head{padding:17px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.chat-messages{height:310px;overflow:auto;padding:20px;background:#fafbfd}.bubble{max-width:78%;padding:13px 15px;border-radius:12px;margin:0 0 12px;font-size:12px;line-height:1.9}.bot{background:#fff;border:1px solid var(--line);margin-left:auto}.human{background:#eaf0f6;margin-right:auto}.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}.chat-input input{flex:1;border:1px solid var(--line);border-radius:8px;padding:12px;outline:0;font-size:12px}
+.formrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.formrow input,.formrow select{border:1px solid var(--line);border-radius:8px;padding:11px;background:#fff;font-size:12px;min-width:180px}.notice{padding:12px 14px;border-radius:8px;background:#fff8e9;border:1px solid #f0dfb8;color:#765b25;font-size:11px;line-height:1.8;margin:15px 0}
+footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
+@media(max-width:1000px){.sidebar{width:220px}.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.cards3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.app{display:block}.sidebar{width:100%;padding:12px;gap:10px}.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 12px}.brand-mark{margin:0}.brand h1{font-size:12px}.nav{display:flex;overflow:auto;gap:4px}.nav-label,.sidebar-foot{display:none}.nav button{white-space:nowrap;width:auto;padding:9px;font-size:11px}.nav .ico{display:none}.topbar{height:60px;padding:0 16px}.content{padding:20px 14px}.welcome{display:block}.welcome .btn{margin-top:14px}.grid{gap:9px}.stat{padding:13px}.stat strong{font-size:21px}.cards3{grid-template-columns:1fr}.two{gap:12px}.quickgrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">م</div><div><h1>MOHAMED AL-HAJJ<br>LEGAL AI</h1><p>منصة الذكاء القانوني والبحث والترافع</p></div></div>
+  <div class="nav-label">القائمة الرئيسية</div>
+  <nav class="nav">
+    <button class="active" data-page="dashboard"><span class="ico">▦</span>لوحة التحكم</button>
+    <button data-page="assistant"><span class="ico">✧</span>المستشار القانوني</button>
+    <button data-page="library"><span class="ico">▤</span>المكتبة التشريعية</button>
+    <button data-page="cases"><span class="ico">⚖</span>تحليل القضايا</button>
+    <button data-page="drafting"><span class="ico">✎</span>صياغة المذكرات</button>
+    <button data-page="precedents"><span class="ico">§</span>السوابق القضائية</button>
+    <button data-page="contracts"><span class="ico">▧</span>العقود والصيغ</button>
+    <button data-page="settings"><span class="ico">⚙</span>الإعدادات</button>
+  </nav>
+  <div class="sidebar-foot">نسخة أولية تجريبية<br>المالك: محمد الحاج<br>© 2026 Mohamed Al-Hajj Legal AI</div>
+</aside>
+<main class="main">
+<header class="topbar"><div><div class="top-title" id="topTitle">لوحة التحكم</div><div class="top-sub">مساحة العمل القانونية الخاصة بك</div></div><div class="user"><div class="avatar">م ح</div><div><b>محمد الحاج</b><div class="muted">مدير المنصة</div></div></div></header>
+<div class="content">
+<section class="page active" id="dashboard">
+  <div class="welcome"><div><h2>مرحباً بك في مكتبك القانوني الذكي</h2><p>إدارة المعرفة القانونية وتحليل القضايا وصياغة المستندات من مكان واحد.</p></div><button class="btn gold" onclick="showPage('assistant')">ابدأ استشارة قانونية ←</button></div>
+  <div class="grid">
+    <div class="stat"><div class="stat-top">التشريعات المفهرسة <span class="stat-icon">§</span></div><strong>30</strong><small>سجلات أولية تحتاج استكمال النصوص</small></div>
+    <div class="stat"><div class="stat-top">نماذج العقود <span class="stat-icon">▧</span></div><strong>50+</strong><small>عناوين مفهرسة أولياً</small></div>
+    <div class="stat"><div class="stat-top">السوابق القضائية <span class="stat-icon">⚖</span></div><strong>694</strong><small>عدد الفهرس المعلن بالمصدر</small></div>
+    <div class="stat"><div class="stat-top">ملفات القضايا <span class="stat-icon">▤</span></div><strong>0</strong><small>أضف ملفاتك لبدء التحليل</small></div>
+  </div>
+  <div class="two">
+    <div class="panel"><div class="panel-head"><h3>البحث القانوني السريع</h3><span class="muted">بحث في المكتبة</span></div><div class="searchbox"><input id="dashSearch" placeholder="اكتب مسألة قانونية أو رقم مادة..." onkeydown="if(event.key==='Enter')searchLibrary()"><button class="btn" onclick="searchLibrary()">بحث</button></div><p class="muted" style="margin:12px 2px 0">سيتم ربط البحث الدلالي بالمكتبة التشريعية عند تشغيل الخادم وقاعدة البيانات.</p></div>
+    <div class="panel"><div class="panel-head"><h3>الوصول السريع</h3><span class="muted">أدوات المنصة</span></div><div class="quickgrid">
+      <button class="quick" onclick="showPage('cases')"><span>⚖</span><b>تحليل قضية</b><small>قراءة الوقائع والمستندات</small></button>
+      <button class="quick" onclick="showPage('drafting')"><span>✎</span><b>إنشاء مذكرة</b><small>صياغة قانونية منظمة</small></button>
+      <button class="quick" onclick="showPage('library')"><span>§</span><b>بحث تشريعي</b><small>القوانين والمواد</small></button>
+      <button class="quick" onclick="showPage('assistant')"><span>✧</span><b>اسأل المستشار</b><small>استفسار قانوني</small></button>
+    </div></div>
+  </div>
+  <div class="panel"><div class="panel-head"><h3>آخر التحديثات</h3><span class="muted">حالة المشروع</span></div>
+    <div class="activity"><i class="dot"></i><div>إنشاء الهيكل الأولي لواجهة المنصة<small>تم — النسخة التجريبية الأولى</small></div></div>
+    <div class="activity"><i class="dot"></i><div>إعداد فهرس تأسيسي للقوانين والعقود والسوابق<small>تم — يحتاج مراجعة واستكمال المصادر</small></div></div>
+    <div class="activity"><i class="dot"></i><div>ربط محرك الذكاء الاصطناعي وقاعدة البيانات<small>المرحلة التالية — لم يتم الربط بعد</small></div></div>
+  </div>
+</section>
+
+<section class="page" id="assistant">
+  <h2 class="section-title">المستشار القانوني الذكي</h2><p class="section-desc">واجهة المحادثة الأولية للوكيل القانوني. في هذه النسخة، المحادثة تجريبية ولم تُربط بعد بواجهة OpenAI API أو بقاعدة تشريعية حية.</p>
+  <div class="chatbox"><div class="chat-head"><b>المحامي الافتراضي — القانون اليمني</b><span class="muted">نسخة واجهة تجريبية</span></div>
+  <div class="chat-messages" id="messages"><div class="bubble bot">مرحباً بك. اكتب سؤالك القانوني أو حدد المهمة التي تريد إنجازها. عند ربط محرك الذكاء الاصطناعي سأتمكن من البحث في النصوص والمراجع المعتمدة.</div></div>
+  <div class="chat-input"><input id="chatInput" placeholder="اكتب سؤالك القانوني هنا..." onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">إرسال</button></div></div>
+  <div class="notice">يجب أن تستند الإجابات القانونية النهائية إلى النصوص الرسمية النافذة، مع مراجعة المحامي قبل اعتماد أي مذكرة أو إجراء.</div>
+</section>
+
+<section class="page" id="library">
+  <h2 class="section-title">المكتبة التشريعية اليمنية</h2><p class="section-desc">فهرس أولي للقوانين وروابط المصادر. لا يحتوي هذا الإصدار على النص الكامل لكل تشريع، ولا يثبت وحده حالة نفاذ القانون.</p>
+  <div class="formrow"><input id="lawFilter" placeholder="ابحث باسم القانون..." oninput="filterTable()"><select id="lawType" onchange="filterTable()"><option value="">كل التصنيفات</option><option>مدني وتجاري</option><option>جنائي</option><option>إداري</option><option>أحوال شخصية</option></select></div>
+  <div class="tablewrap"><table id="lawTable"><thead><tr><th>اسم التشريع</th><th>رقم القانون</th><th>السنة</th><th>المصدر</th><th>حالة التحقق</th></tr></thead><tbody>
+  <tr><td>القانون المدني</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  <tr><td>قانون المرافعات والتنفيذ المدني</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  <tr><td>قانون الجرائم والعقوبات</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  <tr><td>قانون الإجراءات الجزائية</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  <tr><td>القانون التجاري</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  <tr><td>قانون الشركات التجارية</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  <tr><td>قانون الإثبات</td><td>—</td><td>—</td><td><a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">Yemenilaw</a></td><td>يحتاج توثيق النسخة والتعديلات</td></tr>
+  </tbody></table></div>
+  <p class="muted" style="margin-top:12px">المصدر المرجعي: <a href="https://www.yemenilaw.com/library/yemeni-laws/" target="_blank">فهرس القوانين اليمنية في Yemenilaw</a>.</p>
+</section>
+
+<section class="page" id="cases">
+  <h2 class="section-title">تحليل القضايا والمستندات</h2><p class="section-desc">مساحة مخصصة لرفع ملف القضية وتجهيز التحليل. الرفع في هذه النسخة محلي داخل المتصفح ولا يرسل الملفات إلى خادم.</p>
+  <div class="panel"><h3>ملف القضية</h3><p class="muted">اختر مستندات القضية لعرض أسمائها وتجهيزها للمرحلة البرمجية التالية.</p><div class="formrow"><input type="file" id="caseFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"></div><div id="fileList" class="muted">لم يتم اختيار ملفات.</div><div class="notice">ستشمل النسخة المتصلة لاحقاً استخراج الوقائع والطلبات والأدلة، ورصد التناقضات، وربط كل دفع بالنص القانوني ومصدره.</div><button class="btn" onclick="alert('سيتم تفعيل تحليل المستندات بعد ربط خادم المنصة ومحرك OCR والذكاء الاصطناعي.')">بدء التحليل</button></div>
+</section>
+
+<section class="page" id="drafting">
+  <h2 class="section-title">صياغة المذكرات القانونية</h2><p class="section-desc">نموذج إعداد طلب الصياغة، تمهيداً لربطه بمحرك الصياغة القانونية.</p>
+  <div class="panel"><div class="formrow"><select><option>اختر نوع المستند</option><option>مذكرة دفاع</option><option>صحيفة دعوى</option><option>استئناف</option><option>طعن بالنقض</option><option>تظلم</option><option>طلب وقف تنفيذ</option><option>منازعة تنفيذ</option><option>عقد أو اتفاقية</option></select><select><option>المحكمة / الجهة</option><option>محكمة ابتدائية</option><option>محكمة استئناف</option><option>المحكمة العليا</option><option>المحكمة التجارية</option></select></div><div class="formrow"><input placeholder="اسم مقدم الطلب"><input placeholder="اسم الخصم"><input placeholder="رقم القضية"></div><textarea style="width:100%;min-height:160px;border:1px solid var(--line);border-radius:8px;padding:12px" placeholder="اكتب الوقائع والطلبات والدفوع والمستندات المتاحة..."></textarea><div style="margin-top:14px"><button class="btn" onclick="alert('سيتم تفعيل توليد المذكرات وربط الاستشهادات بعد تشغيل المحرك القانوني.')">إعداد مسودة قانونية</button></div></div>
+</section>
+
+<section class="page" id="precedents">
+  <h2 class="section-title">السوابق القضائية</h2><p class="section-desc">فهرس للبحث في المبادئ والأحكام القضائية اليمنية مع توثيق المحكمة ورقم الحكم وتاريخه ومصدر النشر.</p>
+  <div class="panel"><div class="searchbox"><input placeholder="ابحث بموضوع السابقة أو رقم الحكم..."><button class="btn" onclick="alert('سيتم تفعيل البحث بعد إدخال بيانات السوابق وفهرستها.')">بحث</button></div><div class="notice">رابط المصدر: <a href="https://www.yemenilaw.com/library/judicial-precedents/" target="_blank">مكتبة السوابق القضائية في Yemenilaw</a>. العدد المعروض في الفهرس يحتاج إعادة تحقق عند الاستيراد.</div></div>
+</section>
+
+<section class="page" id="contracts">
+  <h2 class="section-title">العقود والصيغ القانونية</h2><p class="section-desc">تصنيف النماذج القانونية تمهيداً لبناء مكتبة قابلة للبحث والتخصيص.</p>
+  <div class="cards3">
+    <div class="feature"><div class="big">▧</div><h3>العقود المدنية</h3><p>البيع والإيجار والقرض والمقاولة والهبة والوكالة.</p></div>
+    <div class="feature"><div class="big">§</div><h3>العقود التجارية</h3><p>الشراكة والتنازل والحصص والوكالة التجارية والديون.</p></div>
+    <div class="feature"><div class="big">⚖</div><h3>الصيغ القضائية</h3><p>الدعاوى والشكاوى والإقرارات والتعهدات والطلبات.</p></div>
+  </div><div class="notice">المصدر المرجعي: <a href="https://www.yemenilaw.com/contracts/" target="_blank">فهرس العقود والصيغ في Yemenilaw</a>. ستضاف النصوص بعد التحقق من شروط إعادة الاستخدام وتوثيق كل نموذج.</div>
+</section>
+
+<section class="page" id="settings">
+  <h2 class="section-title">إعدادات المنصة</h2><p class="section-desc">البيانات الأساسية وإعدادات التشغيل الأولية.</p>
+  <div class="panel"><div class="formrow"><input value="MOHAMED AL-HAJJ LEGAL AI" aria-label="اسم المنصة"><input value="محمد الحاج" aria-label="المالك"><select><option>العربية — اللغة الأساسية</option><option>English</option><option>Русский</option></select></div><div class="notice">مفاتيح API وكلمات المرور لا توضع في ملفات الواجهة. ستُحفظ في الخادم ضمن متغيرات بيئة آمنة عند إعداد الاستضافة.</div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>إضافة مادة قانونية إلى المكتبة</h3><p class="muted">أدخل نصاً تملك حق استخدامه أو لديك إذن بإعادة نشره. لا تستورد محتوى محمياً بالجملة دون إذن.</p><div class="formrow"><input id="ingestTitle" placeholder="عنوان المادة"><input id="ingestUrl" placeholder="رابط المصدر (اختياري)"><input id="adminToken" placeholder="رمز الإدارة"></div><textarea id="ingestText" style="width:100%;min-height:130px;border:1px solid var(--line);border-radius:8px;padding:12px" placeholder="الصق النص القانوني أو المبدأ القضائي هنا..."></textarea><button class="btn" style="margin-top:12px" onclick="ingestText()">إضافة إلى المكتبة</button><span id="ingestStatus" class="muted" style="margin-right:12px"></span></div></div>
+</section>
+<footer>MOHAMED AL-HAJJ LEGAL AI · نسخة واجهة أولية · 2026</footer>
+</div>
+</main>
+</div>
+<script>
+const titles={dashboard:"لوحة التحكم",assistant:"المستشار القانوني",library:"المكتبة التشريعية",cases:"تحليل القضايا",drafting:"صياغة المذكرات",precedents:"السوابق القضائية",contracts:"العقود والصيغ",settings:"الإعدادات"};
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.getElementById('topTitle').textContent=titles[id]||"المنصة";window.scrollTo(0,0)}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function sendChat(){let input=document.getElementById('chatInput'),v=input.value.trim();if(!v)return;let box=document.getElementById('messages');let u=document.createElement('div');u.className='bubble human';u.textContent=v;box.appendChild(u);let a=document.createElement('div');a.className='bubble bot';a.textContent='تم استلام سؤالك في النموذج التجريبي. لكي أقدم بحثاً ورأياً قانونياً موثقاً، يجب ربط هذه الواجهة بخادم الذكاء الاصطناعي وقاعدة التشريعات والأحكام. لن أختلق مادة أو سابقة قضائية.';box.appendChild(a);input.value='';box.scrollTop=box.scrollHeight}
+async function searchLibrary(){let q=document.getElementById('dashSearch').value.trim();showPage('library');document.getElementById('lawFilter').value=q;filterTable();if(q){let box=document.getElementById('librarySearchResults');if(!box){box=document.createElement('div');box.id='librarySearchResults';box.className='panel';document.getElementById('lawTable').parentElement.after(box)}box.innerHTML='جارٍ البحث في قاعدة البيانات...';try{let r=await fetch('/api/search?q='+encodeURIComponent(q));let d=await r.json();box.innerHTML='<h3>نتائج البحث في المكتبة</h3>'+(d.results||[]).map(x=>'<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.excerpt||'')+'<br><a target="_blank" href="'+escapeHtml(x.url||'#')+'">المصدر</a></small></div></div>').join('')||'<p class="muted">لا توجد نتائج في قاعدة البيانات حالياً.</p>'}catch(e){box.textContent='تعذر الاتصال بالخادم.'}}} 
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function filterTable(){let q=(document.getElementById('lawFilter').value||'').toLowerCase();document.querySelectorAll('#lawTable tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')}
+async function ingestText(){let status=document.getElementById('ingestStatus');status.textContent='جارٍ الحفظ...';try{let r=await fetch('/api/ingest/text',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':document.getElementById('adminToken').value},body:JSON.stringify({title:document.getElementById('ingestTitle').value,text:document.getElementById('ingestText').value,url:document.getElementById('ingestUrl').value,kind:'legal_source'})});let d=await r.json();status.textContent=r.ok?'تمت الإضافة إلى المكتبة.':(d.detail||'تعذر الحفظ')}catch(e){status.textContent='تعذر الاتصال بالخادم.'}}
+document.getElementById('caseFiles').addEventListener('change',e=>{let files=[...e.target.files];document.getElementById('fileList').textContent=files.length?files.map(f=>f.name+' ('+Math.round(f.size/1024)+' KB)').join('، '):'لم يتم اختيار ملفات.'});
+</script>
+</body></html>
