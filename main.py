@@ -147,7 +147,7 @@ def run_sync(x_admin_token: str = Header(default="")):
     if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
         raise HTTPException(status_code=401, detail="رمز الإدارة غير صحيح")
     try:
-        from .sync_yemenilaw import crawl, report, DB
+        from sync_yemenilaw import crawl, report, DB
         result=crawl(DB, max_pages=int(os.getenv("CRAWL_MAX_PAGES","700")), delay=float(os.getenv("CRAWL_DELAY","1.2")))
         return {"result":result,"report":report(DB,result.get("run_id"))}
     except Exception as e:
@@ -192,6 +192,6 @@ def ask(payload: AskRequest):
 
 @app.get("/")
 def home():
-    return FileResponse(os.path.join(BASE_DIR,"..","frontend","index.html"))
+    return FileResponse(os.path.join(BASE_DIR,"index.html"))
 
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"..","frontend")), name="static")
+
