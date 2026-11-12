@@ -205,7 +205,7 @@ async function createDraft(){
 function printDraft(){
  const text=document.getElementById('draftResult').value;
  const w=window.open('','_blank');if(!w)return;
- w.document.write('<html lang="ar" dir="rtl"><meta charset="utf-8"><title>مسودة قانونية</title><style>body{font-family:Tahoma,Arial;line-height:2;white-space:pre-wrap;margin:25mm;color:#17212b}h1{text-align:center}</style><h1>مسودة قانونية — منصة محمد الحاج</h1><main>'+escapeHtml(text).replace(/\\n/g,'<br>')+'</main></html>');
+ w.document.write('<html lang="ar" dir="rtl"><meta charset="utf-8"><title>مسودة قانونية</title><style>body{font-family:Tahoma,Arial;line-height:2;white-space:pre-wrap;margin:25mm;color:#17212b}h1{text-align:center}</style><h1>مسودة قانونية — منصة محمد الحاج</h1><main>'+escapeHtml(text).replace(/\n/g,'<br>')+'</main></html>');
  w.document.close();w.focus();w.print();
 }
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
