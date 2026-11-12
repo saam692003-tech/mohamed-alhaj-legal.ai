@@ -24,8 +24,11 @@ def now():
 def robots_for(session, root, agent):
     rp = urllib.robotparser.RobotFileParser()
     response = session.get(root + "/robots.txt", timeout=20)
-    response.raise_for_status()
-    rp.parse(response.text.splitlines())
+    if response.status_code == 404:
+        rp.parse([])
+    else:
+        response.raise_for_status()
+        rp.parse(response.text.splitlines())
     return rp
 
 def clean_text(soup):
