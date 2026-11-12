@@ -1,4 +1,6 @@
 import os, re, math, threading
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from contextlib import closing
 import psycopg
 from psycopg.rows import dict_row
@@ -101,8 +103,21 @@ def search_docs(query: str, limit: int = 8):
 def startup():
     init_db()
     seed_sources()
-    # One-time background import of public official legislation and source catalogs.
+    scheduler = BackgroundScheduler(timezone=os.getenv("SCHEDULE_TIMEZONE","Asia/Aden"))
+    scheduler.add_job(run_weekly_import, CronTrigger(day_of_week="mon",hour=10,minute=0),
+                      id="yemen-legal-weekly", replace_existing=True, max_instances=1)
+    scheduler.start()
+    app.state.legal_scheduler = scheduler
     threading.Thread(target=initial_source_import, daemon=True).start()
+
+def run_weekly_import():
+    try:
+        from official_sources import crawl_all
+        result = crawl_all(max_pages=int(os.getenv("CRAWL_MAX_PAGES","1200")),
+                           delay=float(os.getenv("CRAWL_DELAY","1.0")))
+        print(f"Weekly legal source refresh: {result}")
+    except Exception as exc:
+        print(f"Weekly legal source refresh failed: {exc}")
 
 def initial_source_import():
     try:
