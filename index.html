@@ -107,8 +107,25 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 </section>
 
 <section class="page" id="drafting">
-  <h2 class="section-title">صياغة المذكرات القانونية</h2><p class="section-desc">نموذج إعداد طلب الصياغة، تمهيداً لربطه بمحرك الصياغة القانونية.</p>
-  <div class="panel"><div class="formrow"><select><option>اختر نوع المستند</option><option>مذكرة دفاع</option><option>صحيفة دعوى</option><option>استئناف</option><option>طعن بالنقض</option><option>تظلم</option><option>طلب وقف تنفيذ</option><option>منازعة تنفيذ</option><option>عقد أو اتفاقية</option></select><select><option>المحكمة / الجهة</option><option>محكمة ابتدائية</option><option>محكمة استئناف</option><option>المحكمة العليا</option><option>المحكمة التجارية</option></select></div><div class="formrow"><input placeholder="اسم مقدم الطلب"><input placeholder="اسم الخصم"><input placeholder="رقم القضية"></div><textarea style="width:100%;min-height:160px;border:1px solid var(--line);border-radius:8px;padding:12px" placeholder="اكتب الوقائع والطلبات والدفوع والمستندات المتاحة..."></textarea><div style="margin-top:14px"><button class="btn" onclick="alert('سيتم تفعيل توليد المذكرات وربط الاستشهادات بعد تشغيل المحرك القانوني.')">إعداد مسودة قانونية</button></div></div>
+  <h2 class="section-title">صياغة المذكرات القانونية</h2>
+  <p class="section-desc">أدخل بيانات القضية والوقائع والطلبات، وسيبحث المحرك في المكتبة القانونية قبل إعداد مسودة قابلة للمراجعة والطباعة.</p>
+  <div class="panel">
+    <div class="formrow">
+      <select id="draftType"><option value="مذكرة دفاع">مذكرة دفاع</option><option value="صحيفة دعوى">صحيفة دعوى</option><option value="لائحة استئناف">لائحة استئناف</option><option value="طعن بالنقض">طعن بالنقض</option><option value="تظلم">تظلم</option><option value="طلب وقف تنفيذ">طلب وقف تنفيذ</option><option value="منازعة تنفيذ">منازعة تنفيذ</option><option value="عقد أو اتفاقية">عقد أو اتفاقية</option></select>
+      <select id="draftCourt"><option value="">حدد المحكمة أو الجهة</option><option>محكمة ابتدائية</option><option>محكمة استئناف</option><option>المحكمة العليا</option><option>المحكمة التجارية</option><option>النيابة العامة</option><option>جهة إدارية</option></select>
+    </div>
+    <div class="formrow"><input id="draftApplicant" placeholder="اسم مقدم الطلب أو موكلك"><input id="draftOpponent" placeholder="اسم الخصم"><input id="draftCaseNo" placeholder="رقم القضية إن وجد"></div>
+    <label class="muted" for="draftFacts">الوقائع والتفاصيل</label>
+    <textarea id="draftFacts" style="width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:12px;margin:8px 0 14px" placeholder="اكتب الوقائع بالتسلسل الزمني، والإجراءات السابقة، والمستندات والأدلة..."></textarea>
+    <div class="formrow"><input id="draftRequests" style="flex:1" placeholder="الطلبات الختامية"><input id="draftDefenses" style="flex:1" placeholder="الدفوع أو الأسانيد التي تريد بحثها (اختياري)"></div>
+    <button class="btn" id="draftButton" onclick="createDraft()">إعداد المسودة القانونية</button>
+    <span id="draftStatus" class="muted" style="margin-right:12px"></span>
+    <div id="draftOutput" style="display:none;margin-top:18px">
+      <div class="panel-head"><h3>المسودة الناتجة</h3><button class="btn light" onclick="printDraft()">طباعة / حفظ PDF</button></div>
+      <textarea id="draftResult" style="width:100%;min-height:420px;border:1px solid var(--line);border-radius:8px;padding:14px;line-height:2" readonly></textarea>
+      <div id="draftSources" class="muted" style="margin-top:12px;line-height:2"></div>
+    </div>
+  </div>
 </section>
 
 <section class="page" id="precedents"><div id="precedentsLive" class="panel"><h3>فهرس المحكمة العليا والمصادر</h3><p class="muted">جارٍ تحميل الفهرس...</p></div>
@@ -129,7 +146,7 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
   <h2 class="section-title">إعدادات المنصة</h2><p class="section-desc">البيانات الأساسية وإعدادات التشغيل الأولية.</p>
   <div class="panel"><div class="formrow"><input value="MOHAMED AL-HAJJ LEGAL AI" aria-label="اسم المنصة"><input value="محمد الحاج" aria-label="المالك"><select><option>العربية — اللغة الأساسية</option><option>English</option><option>Русский</option></select></div><div class="notice">مفاتيح API وكلمات المرور لا توضع في ملفات الواجهة. ستُحفظ في الخادم ضمن متغيرات بيئة آمنة عند إعداد الاستضافة.</div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>إضافة مادة قانونية إلى المكتبة</h3><p class="muted">أدخل نصاً تملك حق استخدامه أو لديك إذن بإعادة نشره. لا تستورد محتوى محمياً بالجملة دون إذن.</p><div class="formrow"><input id="ingestTitle" placeholder="عنوان المادة"><input id="ingestUrl" placeholder="رابط المصدر (اختياري)"><input id="adminToken" placeholder="رمز الإدارة"></div><textarea id="ingestText" style="width:100%;min-height:130px;border:1px solid var(--line);border-radius:8px;padding:12px" placeholder="الصق النص القانوني أو المبدأ القضائي هنا..."></textarea><button class="btn" style="margin-top:12px" onclick="ingestText()">إضافة إلى المكتبة</button><span id="ingestStatus" class="muted" style="margin-right:12px"></span></div></div>
 </section>
-<footer>MOHAMED AL-HAJJ LEGAL AI · نسخة واجهة أولية · 2026</footer>
+<footer>MOHAMED AL-HAJJ LEGAL AI · نسخة متصلة بالخادم وقاعدة البيانات · 2026</footer>
 </div>
 </main>
 </div>
@@ -137,7 +154,7 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 const API_BASE="https://mohamed-alhaj-legal-api.onrender.com";
 const titles={dashboard:"لوحة التحكم",assistant:"المستشار القانوني",library:"المكتبة التشريعية",cases:"تحليل القضايا",drafting:"صياغة المذكرات",precedents:"السوابق القضائية",contracts:"العقود والصيغ",settings:"الإعدادات"};
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.getElementById('topTitle').textContent=titles[id]||"المنصة";window.scrollTo(0,0);loadSectionData(id)}
-document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);loadSectionData(b.dataset.page)}));
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 async function sendChat(){let input=document.getElementById('chatInput'),v=input.value.trim();if(!v)return;let box=document.getElementById('messages');let u=document.createElement('div');u.className='bubble human';u.textContent=v;box.appendChild(u);input.value='';let a=document.createElement('div');a.className='bubble bot';a.textContent='جارٍ البحث وإعداد الإجابة...';box.appendChild(a);box.scrollTop=box.scrollHeight;try{let r=await fetch(API_BASE+'/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:v})});let d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر تنفيذ الطلب');a.textContent=d.answer||'لم تصل إجابة.';if(d.sources&&d.sources.length){let src=document.createElement('div');src.style.marginTop='10px';src.innerHTML='<b>المصادر:</b><br>'+d.sources.map(s=>'<a target="_blank" rel="noopener" href="'+escapeHtml(s.url||'#')+'">'+escapeHtml(s.title)+'</a>').join('<br>');a.appendChild(src)}}catch(e){a.textContent='تعذر الاتصال بالخادم: '+e.message}box.scrollTop=box.scrollHeight}
 async function searchLibrary(){let q=document.getElementById('dashSearch').value.trim();showPage('library');document.getElementById('lawFilter').value=q;filterTable();if(q){let box=document.getElementById('librarySearchResults');if(!box){box=document.createElement('div');box.id='librarySearchResults';box.className='panel';document.getElementById('lawTable').parentElement.after(box)}box.innerHTML='جارٍ البحث في قاعدة البيانات...';try{let r=await fetch(API_BASE+'/api/search?q='+encodeURIComponent(q));let d=await r.json();box.innerHTML='<h3>نتائج البحث في المكتبة</h3>'+(d.results||[]).map(x=>'<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.excerpt||'')+'<br><a target="_blank" href="'+escapeHtml(x.url||'#')+'">المصدر</a></small></div></div>').join('')||'<p class="muted">لا توجد نتائج في قاعدة البيانات حالياً.</p>'}catch(e){box.textContent='تعذر الاتصال بالخادم.'}}} 
 
@@ -166,6 +183,31 @@ async function loadLibraryStats(){
  }catch(e){}
 }
 
+async function createDraft(){
+ const status=document.getElementById('draftStatus'),button=document.getElementById('draftButton');
+ const facts=document.getElementById('draftFacts').value.trim();
+ if(facts.length<20){status.textContent='يرجى إدخال وقائع كافية لا تقل عن 20 حرفاً.';return}
+ const payload={document_type:document.getElementById('draftType').value,court:document.getElementById('draftCourt').value,
+ applicant:document.getElementById('draftApplicant').value,opponent:document.getElementById('draftOpponent').value,
+ case_number:document.getElementById('draftCaseNo').value,facts,requests:document.getElementById('draftRequests').value,
+ defenses:document.getElementById('draftDefenses').value};
+ button.disabled=true;status.textContent='يجري البحث في المكتبة وإعداد المسودة...';
+ try{
+  const r=await fetch(API_BASE+'/api/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر إعداد المسودة');
+  document.getElementById('draftResult').value=d.draft||'لم يتم إنشاء مسودة.';
+  document.getElementById('draftOutput').style.display='block';
+  document.getElementById('draftSources').innerHTML='<b>المصادر التي استرجعها المحرك:</b><br>'+(d.sources||[]).map(s=>'<a target="_blank" rel="noopener" href="'+escapeHtml(s.url||'#')+'">'+escapeHtml(s.title)+'</a>').join('<br>')||'لم يعثر المحرك على مراجع مطابقة في المكتبة.');
+  status.textContent='تم إعداد المسودة. راجع النصوص والمراجع قبل اعتمادها.';
+ }catch(e){status.textContent=e.message}
+ finally{button.disabled=false}
+}
+function printDraft(){
+ const text=document.getElementById('draftResult').value;
+ const w=window.open('','_blank');if(!w)return;
+ w.document.write('<html lang="ar" dir="rtl"><meta charset="utf-8"><title>مسودة قانونية</title><style>body{font-family:Tahoma,Arial;line-height:2;white-space:pre-wrap;margin:25mm;color:#17212b}h1{text-align:center}</style><h1>مسودة قانونية — منصة محمد الحاج</h1><main>'+escapeHtml(text).replace(/\\n/g,'<br>')+'</main></html>');
+ w.document.close();w.focus();w.print();
+}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function filterTable(){let q=(document.getElementById('lawFilter').value||'').toLowerCase();document.querySelectorAll('#lawTable tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')}
 async function ingestText(){let status=document.getElementById('ingestStatus');status.textContent='جارٍ الحفظ...';try{let r=await fetch(API_BASE+'/api/ingest/text',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':document.getElementById('adminToken').value},body:JSON.stringify({title:document.getElementById('ingestTitle').value,text:document.getElementById('ingestText').value,url:document.getElementById('ingestUrl').value,kind:'legal_source'})});let d=await r.json();status.textContent=r.ok?'تمت الإضافة إلى المكتبة.':(d.detail||'تعذر الحفظ')}catch(e){status.textContent='تعذر الاتصال بالخادم.'}}
