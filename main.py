@@ -73,6 +73,16 @@ def init_db():
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=8000)
 
+class DraftRequest(BaseModel):
+    document_type: str = Field(min_length=2, max_length=100)
+    court: Optional[str] = ""
+    applicant: Optional[str] = ""
+    opponent: Optional[str] = ""
+    case_number: Optional[str] = ""
+    facts: str = Field(min_length=20, max_length=20000)
+    requests: Optional[str] = ""
+    defenses: Optional[str] = ""
+
 class IngestRequest(BaseModel):
     title: str = Field(min_length=2, max_length=500)
     text: str = Field(min_length=20)
@@ -241,6 +251,47 @@ def ask(payload: AskRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"تعذر الاتصال بمحرك الذكاء الاصطناعي: {str(e)[:300]}")
 
+
+@app.post("/api/draft")
+def create_legal_draft(payload: DraftRequest):
+    if not OPENAI_API_KEY:
+        raise HTTPException(status_code=503, detail="محرك الصياغة لم يُفعّل بعد: يلزم ضبط OPENAI_API_KEY في إعدادات خدمة الخادم.")
+    query = " ".join([payload.document_type, payload.facts[:3000], payload.defenses or ""])
+    sources = search_docs(query, 10)
+    source_context = "\\n\\n".join(
+        f"[{i+1}] {s['title']} | {s['url']}\\n{s['excerpt']}" for i,s in enumerate(sources)
+    )
+    prompt = f"""أعد مسودة {payload.document_type} وفق القانون اليمني وبصياغة قانونية عربية مهنية.
+بيانات المستند:
+المحكمة أو الجهة: {payload.court or 'غير محددة'}
+مقدم الطلب: {payload.applicant or 'غير محدد'}
+الخصم: {payload.opponent or 'غير محدد'}
+رقم القضية: {payload.case_number or 'غير محدد'}
+الوقائع: {payload.facts}
+الطلبات: {payload.requests or 'تُستخلص من الوقائع عند إمكان ذلك، وإلا اذكر أنها تحتاج استكمالاً'}
+الدفوع المطلوب بحثها: {payload.defenses or 'استخرج الدفوع المحتملة من الوقائع دون افتراض وقائع غير مذكورة'}
+المراجع المسترجعة من مكتبة المنصة:
+{source_context or 'لا توجد مراجع مسترجعة.'}
+التزم بما يلي:
+1. لا تختلق أرقام مواد أو نصوص قوانين أو أحكاماً قضائية أو تواريخ.
+2. لا تنسب إلى مصدر معلومة لا يتضمنها.
+3. إذا لم تتوفر مادة قانونية محددة، ضع عبارة [يلزم التحقق من النص ورقم المادة] بدلاً من اختلاقها.
+4. افصل الوقائع عن التكييف القانوني والدفوع والطلبات.
+5. أبرز أوجه النقص أو التناقض في الوقائع في فقرة مستقلة.
+6. أخرج مسودة كاملة قابلة للتحرير، مع ترك البيانات الناقصة بين أقواس مربعة.
+7. اختم بقائمة المرفقات والمصادر المتاحة.
+"""
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.responses.create(
+            model=CHAT_MODEL,
+            instructions="أنت محامٍ وباحث قانوني متخصص في التشريعات اليمنية. الدقة مقدمة على الإطالة، ولا تختلق أي مرجع.",
+            input=prompt
+        )
+        return {"draft": response.output_text or "لم يتم إنشاء مسودة.", "sources":[{"title":s["title"],"url":s["url"]} for s in sources]}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"تعذر تشغيل محرك الصياغة: {str(e)[:300]}")
 
 @app.get("/api/library")
 def library_list(q: str = "", kind: str = "", limit: int = 100, offset: int = 0):
