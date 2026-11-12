@@ -197,7 +197,7 @@ async function createDraft(){
   const d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر إعداد المسودة');
   document.getElementById('draftResult').value=d.draft||'لم يتم إنشاء مسودة.';
   document.getElementById('draftOutput').style.display='block';
-  document.getElementById('draftSources').innerHTML='<b>المصادر التي استرجعها المحرك:</b><br>'+(d.sources||[]).map(s=>'<a target="_blank" rel="noopener" href="'+escapeHtml(s.url||'#')+'">'+escapeHtml(s.title)+'</a>').join('<br>')||'لم يعثر المحرك على مراجع مطابقة في المكتبة.');
+  document.getElementById('draftSources').innerHTML='<b>المصادر التي استرجعها المحرك:</b><br>'+(d.sources||[]).map(s=>'<a target="_blank" rel="noopener" href="'+escapeHtml(s.url||'#')+'">'+escapeHtml(s.title)+'</a>').join('<br>')||'لم يعثر المحرك على مراجع مطابقة في المكتبة.';
   status.textContent='تم إعداد المسودة. راجع النصوص والمراجع قبل اعتمادها.';
  }catch(e){status.textContent=e.message}
  finally{button.disabled=false}
