@@ -258,8 +258,8 @@ def create_legal_draft(payload: DraftRequest):
         raise HTTPException(status_code=503, detail="محرك الصياغة لم يُفعّل بعد: يلزم ضبط OPENAI_API_KEY في إعدادات خدمة الخادم.")
     query = " ".join([payload.document_type, payload.facts[:3000], payload.defenses or ""])
     sources = search_docs(query, 10)
-    source_context = "\\n\\n".join(
-        f"[{i+1}] {s['title']} | {s['url']}\\n{s['excerpt']}" for i,s in enumerate(sources)
+    source_context = "\n\n".join(
+        f"[{i+1}] {s['title']} | {s['url']}\n{s['excerpt']}" for i,s in enumerate(sources)
     )
     prompt = f"""أعد مسودة {payload.document_type} وفق القانون اليمني وبصياغة قانونية عربية مهنية.
 بيانات المستند:
