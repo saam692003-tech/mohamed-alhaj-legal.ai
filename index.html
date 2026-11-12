@@ -142,7 +142,7 @@ async function sendChat(){let input=document.getElementById('chatInput'),v=input
 async function searchLibrary(){let q=document.getElementById('dashSearch').value.trim();showPage('library');document.getElementById('lawFilter').value=q;filterTable();if(q){let box=document.getElementById('librarySearchResults');if(!box){box=document.createElement('div');box.id='librarySearchResults';box.className='panel';document.getElementById('lawTable').parentElement.after(box)}box.innerHTML='جارٍ البحث في قاعدة البيانات...';try{let r=await fetch(API_BASE+'/api/search?q='+encodeURIComponent(q));let d=await r.json();box.innerHTML='<h3>نتائج البحث في المكتبة</h3>'+(d.results||[]).map(x=>'<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.excerpt||'')+'<br><a target="_blank" href="'+escapeHtml(x.url||'#')+'">المصدر</a></small></div></div>').join('')||'<p class="muted">لا توجد نتائج في قاعدة البيانات حالياً.</p>'}catch(e){box.textContent='تعذر الاتصال بالخادم.'}}} 
 
 async function loadSectionData(section){
- const map={library:{id:'libraryLive',kind:''},precedents:{id:'precedentsLive',kind:'court_catalog'},contracts:{id:'contractsLive',kind:'external_contract_catalog'}};
+ const map={library:{id:'libraryLive',kind:''},precedents:{id:'precedentsLive',kind:'precedent'},contracts:{id:'contractsLive',kind:'contract'}};
  if(!map[section])return;
  const cfg=map[section],box=document.getElementById(cfg.id);if(!box)return;
  box.innerHTML='<p class="muted">جارٍ جلب السجلات من قاعدة البيانات...</p>';
@@ -153,10 +153,10 @@ async function loadSectionData(section){
   box.innerHTML='<div class="panel-head"><h3>السجلات المتاحة</h3><span class="muted">عدد السجلات: '+d.total+'</span></div>'+
    d.items.map(x=>{
     const source=x.source_url||x.url||'#';
-    const pdf=String(source).toLowerCase().endsWith('.pdf');
-    const read=x.excerpt&&x.excerpt.length>80?'<a target="_blank" href="'+API_BASE+'/library/'+x.id+'/print">فتح المستند / حفظ PDF</a>':'';
-    const direct=pdf?'<a target="_blank" href="'+escapeHtml(source)+'">تنزيل ملف PDF الأصلي</a>':'<a target="_blank" href="'+escapeHtml(source)+'">فتح المصدر الأصلي</a>';
-    return '<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.source_name)+' — '+escapeHtml(x.verification_status||'')+'<br>'+direct+' '+read+'</small></div></div>'
+    const pdf=!!x.has_pdf;
+    const read='<a target="_blank" href="'+API_BASE+'/library/'+x.id+'/print">فتح النص الكامل / حفظ PDF</a>';
+    const direct=pdf?'<a target="_blank" href="'+API_BASE+'/api/library/'+x.id+'/download">فتح / تنزيل PDF المحفوظ</a>':'<a target="_blank" href="'+escapeHtml(source)+'">المصدر الأصلي</a>';
+    return '<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.source_name)+' — '+escapeHtml(x.verification_status||'')+'<br>'+direct+' '+read+'<br><a target="_blank" rel="noopener" href="'+escapeHtml(source)+'">رابط المصدر المرجعي</a></small></div></div>'
    }).join('');
  }catch(e){box.innerHTML='<p>تعذر تحميل المكتبة: '+escapeHtml(e.message)+'</p>'}
 }
