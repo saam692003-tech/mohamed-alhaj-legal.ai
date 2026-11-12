@@ -1,4 +1,4 @@
-import os, re, math
+import os, re, math, threading
 from contextlib import closing
 import psycopg
 from psycopg.rows import dict_row
@@ -99,6 +99,22 @@ def search_docs(query: str, limit: int = 8):
 def startup():
     init_db()
     seed_sources()
+    # One-time background import of public official legislation and source catalogs.
+    threading.Thread(target=initial_source_import, daemon=True).start()
+
+def initial_source_import():
+    try:
+        with closing(db()) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) AS n FROM crawl_runs WHERE status='complete' AND detail LIKE %s",("%موقع النيابة العامة%",))
+                done=cur.fetchone()["n"]
+        if done:
+            return
+        from official_sources import import_official_legislation, index_catalogs
+        import_official_legislation(max_pages=int(os.getenv("CRAWL_MAX_PAGES","180")), delay=float(os.getenv("CRAWL_DELAY","1.3")))
+        index_catalogs()
+    except Exception as exc:
+        print(f"Initial legal source import failed: {exc}")
 
 def seed_sources():
     seeds = [
