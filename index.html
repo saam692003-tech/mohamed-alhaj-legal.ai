@@ -86,7 +86,7 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
   <div class="notice">يجب أن تستند الإجابات القانونية النهائية إلى النصوص الرسمية النافذة، مع مراجعة المحامي قبل اعتماد أي مذكرة أو إجراء.</div>
 </section>
 
-<section class="page" id="library">
+<section class="page" id="library"><div id="libraryLive" class="panel"><h3>المكتبة المتصلة بقاعدة البيانات</h3><p class="muted">جارٍ تحميل السجلات القانونية...</p></div>
   <h2 class="section-title">المكتبة التشريعية اليمنية</h2><p class="section-desc">فهرس أولي للقوانين وروابط المصادر. لا يحتوي هذا الإصدار على النص الكامل لكل تشريع، ولا يثبت وحده حالة نفاذ القانون.</p>
   <div class="formrow"><input id="lawFilter" placeholder="ابحث باسم القانون..." oninput="filterTable()"><select id="lawType" onchange="filterTable()"><option value="">كل التصنيفات</option><option>مدني وتجاري</option><option>جنائي</option><option>إداري</option><option>أحوال شخصية</option></select></div>
   <div class="tablewrap"><table id="lawTable"><thead><tr><th>اسم التشريع</th><th>رقم القانون</th><th>السنة</th><th>المصدر</th><th>حالة التحقق</th></tr></thead><tbody>
@@ -111,12 +111,12 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
   <div class="panel"><div class="formrow"><select><option>اختر نوع المستند</option><option>مذكرة دفاع</option><option>صحيفة دعوى</option><option>استئناف</option><option>طعن بالنقض</option><option>تظلم</option><option>طلب وقف تنفيذ</option><option>منازعة تنفيذ</option><option>عقد أو اتفاقية</option></select><select><option>المحكمة / الجهة</option><option>محكمة ابتدائية</option><option>محكمة استئناف</option><option>المحكمة العليا</option><option>المحكمة التجارية</option></select></div><div class="formrow"><input placeholder="اسم مقدم الطلب"><input placeholder="اسم الخصم"><input placeholder="رقم القضية"></div><textarea style="width:100%;min-height:160px;border:1px solid var(--line);border-radius:8px;padding:12px" placeholder="اكتب الوقائع والطلبات والدفوع والمستندات المتاحة..."></textarea><div style="margin-top:14px"><button class="btn" onclick="alert('سيتم تفعيل توليد المذكرات وربط الاستشهادات بعد تشغيل المحرك القانوني.')">إعداد مسودة قانونية</button></div></div>
 </section>
 
-<section class="page" id="precedents">
+<section class="page" id="precedents"><div id="precedentsLive" class="panel"><h3>فهرس المحكمة العليا والمصادر</h3><p class="muted">جارٍ تحميل الفهرس...</p></div>
   <h2 class="section-title">السوابق القضائية</h2><p class="section-desc">فهرس للبحث في المبادئ والأحكام القضائية اليمنية مع توثيق المحكمة ورقم الحكم وتاريخه ومصدر النشر.</p>
   <div class="panel"><div class="searchbox"><input placeholder="ابحث بموضوع السابقة أو رقم الحكم..."><button class="btn" onclick="alert('سيتم تفعيل البحث بعد إدخال بيانات السوابق وفهرستها.')">بحث</button></div><div class="notice">رابط المصدر: <a href="https://www.yemenilaw.com/library/judicial-precedents/" target="_blank">مكتبة السوابق القضائية في Yemenilaw</a>. العدد المعروض في الفهرس يحتاج إعادة تحقق عند الاستيراد.</div></div>
 </section>
 
-<section class="page" id="contracts">
+<section class="page" id="contracts"><div id="contractsLive" class="panel"><h3>فهرس العقود والصيغ</h3><p class="muted">جارٍ تحميل الفهرس...</p></div>
   <h2 class="section-title">العقود والصيغ القانونية</h2><p class="section-desc">تصنيف النماذج القانونية تمهيداً لبناء مكتبة قابلة للبحث والتخصيص.</p>
   <div class="cards3">
     <div class="feature"><div class="big">▧</div><h3>العقود المدنية</h3><p>البيع والإيجار والقرض والمقاولة والهبة والوكالة.</p></div>
@@ -136,13 +136,40 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 <script>
 const API_BASE="https://mohamed-alhaj-legal-api.onrender.com";
 const titles={dashboard:"لوحة التحكم",assistant:"المستشار القانوني",library:"المكتبة التشريعية",cases:"تحليل القضايا",drafting:"صياغة المذكرات",precedents:"السوابق القضائية",contracts:"العقود والصيغ",settings:"الإعدادات"};
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.getElementById('topTitle').textContent=titles[id]||"المنصة";window.scrollTo(0,0)}
-document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.getElementById('topTitle').textContent=titles[id]||"المنصة";window.scrollTo(0,0);loadSectionData(id)}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);loadSectionData(b.dataset.page)}));
 async function sendChat(){let input=document.getElementById('chatInput'),v=input.value.trim();if(!v)return;let box=document.getElementById('messages');let u=document.createElement('div');u.className='bubble human';u.textContent=v;box.appendChild(u);input.value='';let a=document.createElement('div');a.className='bubble bot';a.textContent='جارٍ البحث وإعداد الإجابة...';box.appendChild(a);box.scrollTop=box.scrollHeight;try{let r=await fetch(API_BASE+'/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:v})});let d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر تنفيذ الطلب');a.textContent=d.answer||'لم تصل إجابة.';if(d.sources&&d.sources.length){let src=document.createElement('div');src.style.marginTop='10px';src.innerHTML='<b>المصادر:</b><br>'+d.sources.map(s=>'<a target="_blank" rel="noopener" href="'+escapeHtml(s.url||'#')+'">'+escapeHtml(s.title)+'</a>').join('<br>');a.appendChild(src)}}catch(e){a.textContent='تعذر الاتصال بالخادم: '+e.message}box.scrollTop=box.scrollHeight}
 async function searchLibrary(){let q=document.getElementById('dashSearch').value.trim();showPage('library');document.getElementById('lawFilter').value=q;filterTable();if(q){let box=document.getElementById('librarySearchResults');if(!box){box=document.createElement('div');box.id='librarySearchResults';box.className='panel';document.getElementById('lawTable').parentElement.after(box)}box.innerHTML='جارٍ البحث في قاعدة البيانات...';try{let r=await fetch(API_BASE+'/api/search?q='+encodeURIComponent(q));let d=await r.json();box.innerHTML='<h3>نتائج البحث في المكتبة</h3>'+(d.results||[]).map(x=>'<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.excerpt||'')+'<br><a target="_blank" href="'+escapeHtml(x.url||'#')+'">المصدر</a></small></div></div>').join('')||'<p class="muted">لا توجد نتائج في قاعدة البيانات حالياً.</p>'}catch(e){box.textContent='تعذر الاتصال بالخادم.'}}} 
+
+async function loadSectionData(section){
+ const map={library:{id:'libraryLive',kind:''},precedents:{id:'precedentsLive',kind:'court_catalog'},contracts:{id:'contractsLive',kind:'external_contract_catalog'}};
+ if(!map[section])return;
+ const cfg=map[section],box=document.getElementById(cfg.id);if(!box)return;
+ box.innerHTML='<p class="muted">جارٍ جلب السجلات من قاعدة البيانات...</p>';
+ try{
+  const url=API_BASE+'/api/library?limit=150&kind='+encodeURIComponent(cfg.kind);
+  const r=await fetch(url),d=await r.json();if(!r.ok)throw new Error('فشل تحميل المكتبة');
+  if(!d.items||!d.items.length){box.innerHTML='<p>لا توجد سجلات مفهرسة في هذا القسم حتى الآن.</p>';return}
+  box.innerHTML='<div class="panel-head"><h3>السجلات المتاحة</h3><span class="muted">عدد السجلات: '+d.total+'</span></div>'+
+   d.items.map(x=>{
+    const source=x.source_url||x.url||'#';
+    const pdf=String(source).toLowerCase().endsWith('.pdf');
+    const read=x.excerpt&&x.excerpt.length>80?'<a target="_blank" href="'+API_BASE+'/library/'+x.id+'/print">فتح المستند / حفظ PDF</a>':'';
+    const direct=pdf?'<a target="_blank" href="'+escapeHtml(source)+'">تنزيل ملف PDF الأصلي</a>':'<a target="_blank" href="'+escapeHtml(source)+'">فتح المصدر الأصلي</a>';
+    return '<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.source_name)+' — '+escapeHtml(x.verification_status||'')+'<br>'+direct+' '+read+'</small></div></div>'
+   }).join('');
+ }catch(e){box.innerHTML='<p>تعذر تحميل المكتبة: '+escapeHtml(e.message)+'</p>'}
+}
+async function loadLibraryStats(){
+ try{const r=await fetch(API_BASE+'/api/library/stats'),d=await r.json();
+  const n=document.querySelector('#dashboard .grid .stat strong');if(n)n.textContent=d.total;
+ }catch(e){}
+}
+
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function filterTable(){let q=(document.getElementById('lawFilter').value||'').toLowerCase();document.querySelectorAll('#lawTable tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')}
 async function ingestText(){let status=document.getElementById('ingestStatus');status.textContent='جارٍ الحفظ...';try{let r=await fetch(API_BASE+'/api/ingest/text',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':document.getElementById('adminToken').value},body:JSON.stringify({title:document.getElementById('ingestTitle').value,text:document.getElementById('ingestText').value,url:document.getElementById('ingestUrl').value,kind:'legal_source'})});let d=await r.json();status.textContent=r.ok?'تمت الإضافة إلى المكتبة.':(d.detail||'تعذر الحفظ')}catch(e){status.textContent='تعذر الاتصال بالخادم.'}}
+loadLibraryStats();loadSectionData('library');loadSectionData('precedents');loadSectionData('contracts');
 document.getElementById('caseFiles').addEventListener('change',e=>{let files=[...e.target.files];document.getElementById('fileList').textContent=files.length?files.map(f=>f.name+' ('+Math.round(f.size/1024)+' KB)').join('، '):'لم يتم اختيار ملفات.'});
 </script>
 </body></html>
