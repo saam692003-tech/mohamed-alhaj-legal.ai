@@ -123,7 +123,7 @@ def initial_source_import():
     try:
         with closing(db()) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) AS n FROM crawl_runs WHERE status='complete' AND detail LIKE %s",("%موقع النيابة العامة%",))
+                cur.execute("SELECT COUNT(*) AS n FROM documents WHERE source_url<>'' AND is_active=1")
                 done=cur.fetchone()["n"]
         if done:
             return
