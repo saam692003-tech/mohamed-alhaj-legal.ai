@@ -1,5 +1,7 @@
-import os, re, sqlite3, math
+import os, re, math
 from contextlib import closing
+import psycopg
+from psycopg.rows import dict_row
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 DB_PATH = os.getenv("DATABASE_PATH", os.path.join(BASE_DIR, "legal_library.db"))
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "change-this-admin-token")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -21,35 +24,45 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
                    allow_methods=["*"], allow_headers=["*"])
 
 def db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL غير مضبوط في إعدادات الخدمة")
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
 
 def init_db():
     with closing(db()) as c:
-        c.execute("""CREATE TABLE IF NOT EXISTS documents(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL, text TEXT NOT NULL, url TEXT DEFAULT '',
-            kind TEXT DEFAULT 'legal_source', source_name TEXT DEFAULT '',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP, source_url TEXT DEFAULT '', content_hash TEXT DEFAULT '', fetched_at TEXT DEFAULT '', verification_status TEXT DEFAULT 'غير متحقق')""")
-        cols={r[1] for r in c.execute("PRAGMA table_info(documents)").fetchall()}
-        for name, typ in [("source_url","TEXT DEFAULT ''"),("content_hash","TEXT DEFAULT ''"),("fetched_at","TEXT DEFAULT ''"),("verification_status","TEXT DEFAULT 'غير متحقق'")]:
-            if name not in cols: c.execute(f"ALTER TABLE documents ADD COLUMN {name} {typ}")
-        c.execute("ALTER TABLE documents ADD COLUMN is_active INTEGER DEFAULT 1") if "is_active" not in cols else None
-        c.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts
-                     USING fts5(title, text, content='documents', content_rowid='id', tokenize='unicode61')""")
-        c.executescript("""
-        CREATE TRIGGER IF NOT EXISTS documents_ai AFTER INSERT ON documents BEGIN
-          INSERT INTO documents_fts(rowid,title,text) VALUES(new.id,new.title,new.text);
-        END;
-        CREATE TRIGGER IF NOT EXISTS documents_ad AFTER DELETE ON documents BEGIN
-          INSERT INTO documents_fts(documents_fts,rowid,title,text) VALUES('delete',old.id,old.title,old.text);
-        END;
-        CREATE TRIGGER IF NOT EXISTS documents_au AFTER UPDATE ON documents BEGIN
-          INSERT INTO documents_fts(documents_fts,rowid,title,text) VALUES('delete',old.id,old.title,old.text);
-          INSERT INTO documents_fts(rowid,title,text) VALUES(new.id,new.title,new.text);
-        END;
-        """)
+        with c.cursor() as cur:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS documents(
+                id BIGSERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                text TEXT NOT NULL,
+                url TEXT DEFAULT '',
+                kind TEXT DEFAULT 'legal_source',
+                source_name TEXT DEFAULT '',
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                source_url TEXT DEFAULT '',
+                content_hash TEXT DEFAULT '',
+                fetched_at TEXT DEFAULT '',
+                verification_status TEXT DEFAULT 'غير متحقق',
+                is_active INTEGER DEFAULT 1
+            )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS ix_documents_source_url ON documents(source_url)")
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS crawl_runs(
+                id BIGSERIAL PRIMARY KEY, started_at TEXT NOT NULL, finished_at TEXT,
+                status TEXT NOT NULL, pages_seen INTEGER DEFAULT 0, pages_saved INTEGER DEFAULT 0,
+                errors INTEGER DEFAULT 0, detail TEXT DEFAULT ''
+            )
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS change_events(
+                id BIGSERIAL PRIMARY KEY, run_id BIGINT, document_id BIGINT,
+                change_type TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL,
+                detected_at TEXT NOT NULL, old_hash TEXT DEFAULT '', new_hash TEXT DEFAULT '',
+                summary TEXT DEFAULT ''
+            )
+            """)
         c.commit()
 
 class AskRequest(BaseModel):
@@ -63,22 +76,23 @@ class IngestRequest(BaseModel):
     source_name: Optional[str] = ""
 
 def search_docs(query: str, limit: int = 8):
-    terms = re.findall(r"[\w\u0600-\u06FF]+", query)
-    if not terms: return []
-    # FTS5 requires valid tokens; OR improves recall for natural-language Arabic queries.
-    match = " OR ".join('"' + t.replace('"','') + '"' for t in terms[:12])
+    terms = re.findall(r"[\\w\\u0600-\\u06FF]+", query)
+    if not terms:
+        return []
+    clauses = " OR ".join(["(title ILIKE %s OR text ILIKE %s)" for _ in terms[:12]])
+    params=[]
+    for term in terms[:12]:
+        pattern=f"%{term}%"
+        params.extend([pattern,pattern])
+    params.append(limit)
     with closing(db()) as c:
-        rows = c.execute("""SELECT d.id,d.title,d.text,d.url,d.kind,d.source_name,
-                            bm25(documents_fts) AS rank
-                            FROM documents_fts JOIN documents d ON d.id=documents_fts.rowid
-                            WHERE documents_fts MATCH ? AND COALESCE(d.is_active,1)=1 ORDER BY rank LIMIT ?""",
-                         (match, limit)).fetchall()
-    out=[]
-    for r in rows:
-        txt=r["text"]
-        out.append({"id":r["id"],"title":r["title"],"excerpt":txt[:900],
-                    "url":r["url"],"kind":r["kind"],"source_name":r["source_name"]})
-    return out
+        with c.cursor() as cur:
+            cur.execute(f"""SELECT id,title,text,url,kind,source_name
+                            FROM documents WHERE COALESCE(is_active,1)=1 AND ({clauses})
+                            ORDER BY id DESC LIMIT %s""", params)
+            rows=cur.fetchall()
+    return [{"id":r["id"],"title":r["title"],"excerpt":r["text"][:900],
+             "url":r["url"],"kind":r["kind"],"source_name":r["source_name"]} for r in rows]
 
 @app.on_event("startup")
 def startup():
@@ -88,26 +102,28 @@ def startup():
 def seed_sources():
     seeds = [
       ("فهرس القوانين اليمنية — Yemenilaw","فهرس يتضمن روابط صفحات القوانين اليمنية؛ يجب فتح كل قانون والتحقق من نصه وتعديلاته وحالة نفاذه.","https://www.yemenilaw.com/library/yemeni-laws/","index"),
-      ("فهرس السوابق القضائية اليمنية — Yemenilaw","فهرس للسوابق القضائية مرتبة حسب الإصدارات والتصنيفات الموضوعية. لا يعد عنوان السابقة وحده بديلاً عن نص الحكم أو مرجعه الأصلي.","https://www.yemenilaw.com/library/judicial-precedents/","index"),
-      ("السوابق المتعلقة بالأحكام القضائية — Yemenilaw","فهرس موضوعي للسوابق المتعلقة بالأحكام والبطلان والتسبيب.","https://www.yemenilaw.com/library/judicial-precedents/judicial-rulings/","index"),
-      ("السوابق المتعلقة بقواعد الإثبات — Yemenilaw","فهرس موضوعي لقواعد الإثبات والمستندات والشهادة واليمين.","https://www.yemenilaw.com/library/judicial-precedents/evidence-rules/","index"),
-      ("السوابق المتعلقة بإجراءات التقاضي — Yemenilaw","فهرس موضوعي لإجراءات الخصومة والتقاضي والحضور والغياب وسقوط الخصومة.","https://www.yemenilaw.com/library/judicial-precedents/litigation-procedures/","index"),
-      ("فهرس العقود والصيغ — Yemenilaw","فهرس نماذج العقود والصيغ القانونية؛ يلزم التحقق من شروط إعادة الاستخدام لكل مادة.","https://www.yemenilaw.com/contracts/","index")
+      ("فهرس السوابق القضائية اليمنية — Yemenilaw","فهرس للسوابق القضائية مرتبة حسب الإصدارات والتصنيفات الموضوعية.","https://www.yemenilaw.com/library/judicial-precedents/","index"),
+      ("فهرس العقود والصيغ — Yemenilaw","فهرس نماذج العقود والصيغ القانونية.","https://www.yemenilaw.com/contracts/","index")
     ]
     with closing(db()) as c:
-        for title, body, url, kind in seeds:
-            exists=c.execute("SELECT id FROM documents WHERE url=? AND title=?",(url,title)).fetchone()
-            if not exists:
-                c.execute("INSERT INTO documents(title,text,url,kind,source_name) VALUES(?,?,?,?,?)",
-                          (title,body,url,kind,"Yemenilaw"))
+        with c.cursor() as cur:
+            for title, body, url, kind in seeds:
+                cur.execute("SELECT id FROM documents WHERE url=%s AND title=%s",(url,title))
+                if not cur.fetchone():
+                    cur.execute("INSERT INTO documents(title,text,url,kind,source_name) VALUES(%s,%s,%s,%s,%s)",
+                                (title,body,url,kind,"Yemenilaw"))
         c.commit()
 
 @app.get("/api/health")
 def health():
     with closing(db()) as c:
-        count=c.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+        with c.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS n FROM documents")
+            count=cur.fetchone()["n"]
+            cur.execute("SELECT current_database() AS db")
+            dbname=cur.fetchone()["db"]
     return {"status":"ok","service":"Mohamed Al-Hajj Legal AI","documents":count,
-            "openai_configured":bool(OPENAI_API_KEY)}
+            "database":"postgresql","database_name":dbname,"openai_configured":bool(OPENAI_API_KEY)}
 
 @app.get("/api/search")
 def search(q: str, limit: int = 8):
@@ -119,28 +135,31 @@ def ingest_text(payload: IngestRequest, x_admin_token: str = Header(default=""))
     if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
         raise HTTPException(status_code=401, detail="رمز الإدارة غير صحيح")
     with closing(db()) as c:
-        cur=c.execute("""INSERT INTO documents(title,text,url,kind,source_name)
-                         VALUES(?,?,?,?,?)""",
-                      (payload.title,payload.text,payload.url or "",payload.kind or "legal_source",
-                       payload.source_name or ""))
+        with c.cursor() as cur:
+            cur.execute("""INSERT INTO documents(title,text,url,kind,source_name)
+                           VALUES(%s,%s,%s,%s,%s) RETURNING id""",
+                        (payload.title,payload.text,payload.url or "",payload.kind or "legal_source",payload.source_name or ""))
+            doc_id=cur.fetchone()["id"]
         c.commit()
-        doc_id=cur.lastrowid
     return {"status":"stored","document_id":doc_id,"title":payload.title}
 
 @app.get("/api/sync/status")
 def sync_status():
     with closing(db()) as c:
-        total=c.execute("SELECT COUNT(*) FROM documents WHERE source_url<>'' AND is_active=1").fetchone()[0]
-        runs=c.execute("SELECT id,started_at,finished_at,status,pages_seen,pages_saved,errors,detail FROM crawl_runs ORDER BY id DESC LIMIT 5").fetchall() if c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='crawl_runs'").fetchone() else []
-    return {"active_indexed_pages":total,"recent_runs":[dict(x) for x in runs]}
+        with c.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS n FROM documents WHERE source_url<>'' AND is_active=1")
+            total=cur.fetchone()["n"]
+            cur.execute("SELECT id,started_at,finished_at,status,pages_seen,pages_saved,errors,detail FROM crawl_runs ORDER BY id DESC LIMIT 5")
+            runs=cur.fetchall()
+    return {"active_indexed_pages":total,"recent_runs":runs}
 
 @app.get("/api/sync/changes")
 def sync_changes(limit: int = 100):
     with closing(db()) as c:
-        exists=c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='change_events'").fetchone()
-        if not exists: return {"changes":[]}
-        rows=c.execute("SELECT change_type,title,url,detected_at,summary FROM change_events ORDER BY id DESC LIMIT ?",(max(1,min(limit,500)),)).fetchall()
-    return {"changes":[dict(x) for x in rows]}
+        with c.cursor() as cur:
+            cur.execute("SELECT change_type,title,url,detected_at,summary FROM change_events ORDER BY id DESC LIMIT %s",(max(1,min(limit,500)),))
+            rows=cur.fetchall()
+    return {"changes":rows}
 
 @app.post("/api/admin/sync")
 def run_sync(x_admin_token: str = Header(default="")):
