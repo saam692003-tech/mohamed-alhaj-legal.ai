@@ -39,21 +39,35 @@ def classify(url,title):
  return "official_law"
 def save(cur,title,body,url,kind,source,pdf=None,content_type="text/html"):
  digest=hashlib.sha256((body or "").encode()).hexdigest()
- cur.execute("SELECT id FROM documents WHERE source_url=%s",(url,))
+ cur.execute("SELECT id,title,content_hash FROM documents WHERE source_url=%s",(url,))
  old=cur.fetchone()
  if old:
+  if old["content_hash"] and old["content_hash"] != digest:
+   cur.execute("""INSERT INTO change_events(run_id,document_id,change_type,title,url,detected_at,old_hash,new_hash,summary)
+                  VALUES(NULL,%s,'updated',%s,%s,%s,%s,%s,%s)""",
+               (old["id"],title,url,now(),old["content_hash"],digest,"رُصد اختلاف في محتوى الصفحة عند المزامنة الدورية"))
   cur.execute("""UPDATE documents SET title=%s,text=%s,url=%s,kind=%s,source_name=%s,
     content_hash=%s,fetched_at=%s,verification_status=%s,is_active=1,
     pdf_bytes=COALESCE(%s,pdf_bytes),content_type=%s WHERE id=%s""",
-   (title,body,url,kind,source,digest,now(),"مستورد من المصدر الأصلي؛ راجع تاريخ النفاذ والتعديلات",pdf,content_type,old["id"]))
+   (title,body,url,kind,source,digest,now(),"مستورد من المصدر الأصلي؛ يلزم مراجعة النفاذ والتعديلات",pdf,content_type,old["id"]))
   return old["id"]
  cur.execute("""INSERT INTO documents(title,text,url,kind,source_name,source_url,content_hash,
   fetched_at,verification_status,is_active,pdf_bytes,content_type)
   VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,1,%s,%s) RETURNING id""",
   (title,body,url,kind,source,url,digest,now(),"مستورد من المصدر الأصلي؛ راجع تاريخ النفاذ والتعديلات",pdf,content_type))
- return cur.fetchone()["id"]
+ new_id=cur.fetchone()["id"]
+ cur.execute("""INSERT INTO change_events(run_id,document_id,change_type,title,url,detected_at,old_hash,new_hash,summary)
+                VALUES(NULL,%s,'new',%s,%s,%s,'',%s,'أُضيف مستند جديد من المصدر')""",
+             (new_id,title,url,now(),digest))
+ return new_id
 def crawl_all(max_pages=1200,delay=1.0):
  s=requests.Session(); s.headers.update({"User-Agent":UA,"Accept":"text/html,application/pdf,*/*"})
+ started=now()
+ with db() as conn:
+  with conn.cursor() as cur:
+   cur.execute("INSERT INTO crawl_runs(started_at,status,detail) VALUES(%s,'running','مزامنة المصادر القانونية اليمنية') RETURNING id",(started,))
+   run_id=cur.fetchone()["id"]
+  conn.commit()
  total_saved=0; pages=0; errors=0; runs=[]
  for root,source,default_kind in SOURCES:
   rp=robots(s,root); queue=[root+"/"]
@@ -104,7 +118,14 @@ def crawl_all(max_pages=1200,delay=1.0):
    except Exception as e:
     err+=1; errors+=1
   runs.append({"source":source,"pages":len(seen),"saved":saved,"errors":err})
- return {"status":"complete" if errors==0 else "partial","pages_seen":pages,"documents_saved":total_saved,"errors":errors,"sources":runs}
+ status="complete" if errors==0 else "partial"
+ with db() as conn:
+  with conn.cursor() as cur:
+   cur.execute("UPDATE change_events SET run_id=%s WHERE run_id IS NULL AND detected_at >= %s",(run_id,started))
+   cur.execute("UPDATE crawl_runs SET finished_at=%s,status=%s,pages_seen=%s,pages_saved=%s,errors=%s,detail=%s WHERE id=%s",
+               (now(),status,pages,total_saved,errors,str(runs)[:4000],run_id))
+  conn.commit()
+ return {"run_id":run_id,"status":status,"pages_seen":pages,"documents_saved":total_saved,"errors":errors,"sources":runs}
 def index_catalogs():
  return {"note":"All accessible same-domain pages and PDF files are crawled by crawl_all."}
 if __name__=="__main__": print(crawl_all(int(os.getenv("CRAWL_MAX_PAGES","1200")),float(os.getenv("CRAWL_DELAY","1.0"))))
