@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from html import escape
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -48,6 +48,8 @@ def init_db():
                 is_active INTEGER DEFAULT 1
             )
             """)
+            cur.execute("ALTER TABLE documents ADD COLUMN IF NOT EXISTS pdf_bytes BYTEA")
+            cur.execute("ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_type TEXT DEFAULT 'text/html'")
             cur.execute("CREATE INDEX IF NOT EXISTS ix_documents_source_url ON documents(source_url)")
             cur.execute("""
             CREATE TABLE IF NOT EXISTS crawl_runs(
@@ -110,9 +112,8 @@ def initial_source_import():
                 done=cur.fetchone()["n"]
         if done:
             return
-        from official_sources import import_official_legislation, index_catalogs
-        import_official_legislation(max_pages=int(os.getenv("CRAWL_MAX_PAGES","180")), delay=float(os.getenv("CRAWL_DELAY","1.3")))
-        index_catalogs()
+        from official_sources import crawl_all
+        crawl_all(max_pages=int(os.getenv("CRAWL_MAX_PAGES","1200")), delay=float(os.getenv("CRAWL_DELAY","1.0")))
     except Exception as exc:
         print(f"Initial legal source import failed: {exc}")
 
@@ -183,10 +184,8 @@ def run_sync(x_admin_token: str = Header(default="")):
     if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
         raise HTTPException(status_code=401, detail="رمز الإدارة غير صحيح")
     try:
-        from official_sources import import_official_legislation, index_catalogs
-        legislation = import_official_legislation(max_pages=int(os.getenv("CRAWL_MAX_PAGES","180")), delay=float(os.getenv("CRAWL_DELAY","1.3")))
-        catalogs = index_catalogs()
-        return {"legislation":legislation,"catalogs":catalogs}
+        from official_sources import crawl_all
+        return crawl_all(max_pages=int(os.getenv("CRAWL_MAX_PAGES","1200")), delay=float(os.getenv("CRAWL_DELAY","1.0")))
     except Exception as e:
         raise HTTPException(status_code=502,detail=f"تعذرت المزامنة: {str(e)[:300]}")
 
@@ -244,11 +243,23 @@ def library_list(q: str = "", kind: str = "", limit: int = 100, offset: int = 0)
             cur.execute(f"SELECT COUNT(*) AS n FROM documents WHERE {where}",params)
             total=cur.fetchone()["n"]
             cur.execute(f"""SELECT id,title,url,kind,source_name,verification_status,
-                            source_url,fetched_at,LEFT(text,500) AS excerpt
+                            source_url,fetched_at,LEFT(text,500) AS excerpt,(pdf_bytes IS NOT NULL) AS has_pdf
                             FROM documents WHERE {where}
                             ORDER BY id DESC LIMIT %s OFFSET %s""",params+[limit,offset])
             rows=cur.fetchall()
     return {"total":total,"limit":limit,"offset":offset,"items":rows}
+
+
+@app.get("/api/library/{document_id}/download")
+def download_document(document_id: int):
+    with closing(db()) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT title,pdf_bytes FROM documents WHERE id=%s AND COALESCE(is_active,1)=1",(document_id,))
+            row=cur.fetchone()
+    if not row: raise HTTPException(status_code=404,detail="المستند غير موجود")
+    if not row["pdf_bytes"]: raise HTTPException(status_code=404,detail="لا توجد نسخة PDF محفوظة لهذا المستند")
+    filename=re.sub(r"[^\\w\\u0600-\\u06FF.-]+","_",row["title"] or "legal-document")[:100]+".pdf"
+    return Response(content=bytes(row["pdf_bytes"]),media_type="application/pdf",headers={"Content-Disposition":f'inline; filename="{filename}"'})
 
 @app.get("/api/library/stats")
 def library_stats():
