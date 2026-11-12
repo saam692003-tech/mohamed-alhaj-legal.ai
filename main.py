@@ -77,7 +77,7 @@ class IngestRequest(BaseModel):
     source_name: Optional[str] = ""
 
 def search_docs(query: str, limit: int = 8):
-    terms = re.findall(r"[\\w\\u0600-\\u06FF]+", query)
+    terms = re.findall(r"[\w\u0600-\u06FF]+", query)
     if not terms:
         return []
     clauses = " OR ".join(["(title ILIKE %s OR text ILIKE %s)" for _ in terms[:12]])
