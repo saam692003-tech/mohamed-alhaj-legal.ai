@@ -103,7 +103,7 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 
 <section class="page" id="cases">
   <h2 class="section-title">تحليل القضايا والمستندات</h2><p class="section-desc">مساحة مخصصة لرفع ملف القضية وتجهيز التحليل. الرفع في هذه النسخة محلي داخل المتصفح ولا يرسل الملفات إلى خادم.</p>
-  <div class="panel"><h3>ملف القضية</h3><p class="muted">اختر مستندات القضية لعرض أسمائها وتجهيزها للمرحلة البرمجية التالية.</p><div class="formrow"><input type="file" id="caseFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"></div><div id="fileList" class="muted">لم يتم اختيار ملفات.</div><div class="notice">ستشمل النسخة المتصلة لاحقاً استخراج الوقائع والطلبات والأدلة، ورصد التناقضات، وربط كل دفع بالنص القانوني ومصدره.</div><button class="btn" onclick="alert('سيتم تفعيل تحليل المستندات بعد ربط خادم المنصة ومحرك OCR والذكاء الاصطناعي.')">بدء التحليل</button></div>
+  <div class="panel"><h3>ملف القضية</h3><p class="muted">اختر مستندات القضية لعرض أسمائها وتجهيزها للمرحلة البرمجية التالية.</p><div class="formrow"><input type="file" id="caseFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"></div><div id="fileList" class="muted">لم يتم اختيار ملفات.</div><div class="notice">ستشمل النسخة المتصلة لاحقاً استخراج الوقائع والطلبات والأدلة، ورصد التناقضات، وربط كل دفع بالنص القانوني ومصدره.</div><button class="btn" id="caseAnalyzeButton" onclick="analyzeCaseFiles()">رفع الملفات وبدء التحليل</button><div id="caseAnalysisResult" class="panel" style="display:none;margin-top:16px;white-space:pre-wrap;line-height:2"></div></div>
 </section>
 
 <section class="page" id="drafting">
@@ -193,6 +193,18 @@ async function loadLibraryStats(){
  }
 }
 
+async function analyzeCaseFiles(){
+ const input=document.getElementById('caseFiles'),status=document.getElementById('caseAnalysisResult'),button=document.getElementById('caseAnalyzeButton');
+ if(!input.files.length){alert('اختر ملفات القضية أولاً');return}
+ const form=new FormData();[...input.files].forEach(file=>form.append('files',file));
+ button.disabled=true;status.style.display='block';status.textContent='يجري رفع الملفات واستخراج النصوص وتحليلها...';
+ try{
+  const r=await fetch(API_BASE+'/api/cases/analyze',{method:'POST',body:form});
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر تحليل الملفات');
+  status.textContent='تمت معالجة الملفات: '+d.files.map(x=>x.filename).join('، ')+'\n\n'+d.analysis;
+ }catch(e){status.textContent='تعذر إتمام العملية: '+e.message}
+ finally{button.disabled=false}
+}
 async function createDraft(){
  const status=document.getElementById('draftStatus'),button=document.getElementById('draftButton');
  const facts=document.getElementById('draftFacts').value.trim();
