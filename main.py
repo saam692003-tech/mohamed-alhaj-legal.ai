@@ -1,11 +1,11 @@
-import os, re, math, threading
+import os, re, math, threading, io
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from contextlib import closing
 import psycopg
 from psycopg.rows import dict_row
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, Response
@@ -53,6 +53,13 @@ def init_db():
             cur.execute("ALTER TABLE documents ADD COLUMN IF NOT EXISTS pdf_bytes BYTEA")
             cur.execute("ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_type TEXT DEFAULT 'text/html'")
             cur.execute("CREATE INDEX IF NOT EXISTS ix_documents_source_url ON documents(source_url)")
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS case_files(
+                id BIGSERIAL PRIMARY KEY, filename TEXT NOT NULL,
+                content_type TEXT DEFAULT '', extracted_text TEXT DEFAULT '',
+                analysis TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
             cur.execute("""
             CREATE TABLE IF NOT EXISTS crawl_runs(
                 id BIGSERIAL PRIMARY KEY, started_at TEXT NOT NULL, finished_at TEXT,
@@ -172,6 +179,73 @@ def health():
 def search(q: str, limit: int = 8):
     if len(q.strip()) < 2: return {"query":q,"results":[]}
     return {"query":q,"results":search_docs(q, max(1,min(limit,20)))}
+
+
+@app.post("/api/cases/analyze")
+async def analyze_case_files(files: list[UploadFile] = File(...)):
+    if not files:
+        raise HTTPException(status_code=400, detail="اختر ملفاً واحداً على الأقل")
+    extracted=[]
+    for upload in files[:10]:
+        name=(upload.filename or "document").lower()
+        raw=await upload.read()
+        if len(raw)>15*1024*1024:
+            raise HTTPException(status_code=413, detail=f"حجم الملف {upload.filename} يتجاوز 15 ميغابايت")
+        try:
+            if name.endswith(".pdf") or upload.content_type=="application/pdf":
+                from pypdf import PdfReader
+                reader=PdfReader(io.BytesIO(raw))
+                text="\n".join(page.extract_text() or "" for page in reader.pages).strip()
+            elif name.endswith(".docx"):
+                from docx import Document
+                doc=Document(io.BytesIO(raw))
+                text="\n".join(p.text for p in doc.paragraphs).strip()
+                for table in doc.tables:
+                    text += "\n" + "\n".join(" | ".join(cell.text for cell in row.cells) for row in table.rows)
+            elif name.endswith(".txt") or (upload.content_type or "").startswith("text/"):
+                text=raw.decode("utf-8-sig",errors="replace")
+            else:
+                raise HTTPException(status_code=415,detail=f"صيغة غير مدعومة: {upload.filename}. الصيغ المدعومة PDF وDOCX وTXT")
+            if not text.strip():
+                raise HTTPException(status_code=422,detail=f"تعذر استخراج النص من {upload.filename}. قد يكون PDF ممسوحاً ضوئياً ويحتاج OCR.")
+            extracted.append({"filename":upload.filename or "document","text":text[:60000]})
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=422,detail=f"تعذر قراءة {upload.filename}: {str(exc)[:180]}")
+    combined="\n\n".join(f"المستند: {x['filename']}\n{x['text']}" for x in extracted)
+    analysis="تم استخراج النصوص وحفظها. يلزم ضبط مفتاح OpenAI لتفعيل التحليل الآلي."
+    if OPENAI_API_KEY:
+        try:
+            from openai import OpenAI
+            refs=search_docs(combined[:6000],8)
+            context="\n\n".join(f"{x['title']} | {x['url']}\n{x['excerpt']}" for x in refs)
+            client=OpenAI(api_key=OPENAI_API_KEY)
+            response=client.responses.create(
+                model=CHAT_MODEL,
+                instructions="أنت محلل قانوني يمني. حلل المستندات المقدمة فقط، افصل الوقائع والطلبات والأدلة والتواريخ والتناقضات والدفوع المحتملة. لا تختلق مواد قانونية أو وقائع. حدد ما يحتاج إلى مراجعة.",
+                input=f"نصوص المستندات:\n{combined[:90000]}\n\nمراجع المكتبة:\n{context}\n\nأعد تحليلاً منظماً مع بيان النواقص."
+            )
+            analysis=response.output_text or analysis
+        except Exception as exc:
+            analysis=f"تم استخراج النصوص وحفظها، لكن تعذر تشغيل التحليل الذكي: {str(exc)[:250]}"
+    ids=[]
+    with closing(db()) as conn:
+        with conn.cursor() as cur:
+            for item in extracted:
+                cur.execute("INSERT INTO case_files(filename,extracted_text,analysis) VALUES(%s,%s,%s) RETURNING id",
+                    (item["filename"],item["text"],analysis))
+                ids.append(cur.fetchone()["id"])
+        conn.commit()
+    return {"status":"processed","files":[{"id":i,"filename":x["filename"]} for i,x in zip(ids,extracted)],"analysis":analysis}
+
+@app.get("/api/cases")
+def list_case_files():
+    with closing(db()) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id,filename,created_at FROM case_files ORDER BY id DESC LIMIT 100")
+            rows=cur.fetchall()
+    return {"items":rows,"total":len(rows)}
 
 @app.post("/api/ingest/text")
 def ingest_text(payload: IngestRequest, x_admin_token: str = Header(default="")):
