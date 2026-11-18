@@ -19,7 +19,7 @@ button,input,textarea,select{font:inherit}.app{display:flex;min-height:100vh}
 .content{padding:28px 32px;max-width:1500px;margin:auto}.welcome{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:24px}.welcome h2{margin:0 0 8px;font-size:23px}.welcome p{margin:0;color:var(--muted);font-size:13px;line-height:1.8}
 .btn{border:0;border-radius:8px;padding:11px 16px;background:var(--navy2);color:white;cursor:pointer;font-size:12px}.btn.gold{background:var(--gold);color:#182536}.btn.light{background:#eef2f6;color:var(--navy)}.btn:hover{filter:brightness(1.06)}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}.stat,.panel,.quick{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #1a2c3d08}
-.stat{padding:18px}.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.stat-icon{width:34px;height:34px;border-radius:9px;background:#f4efe5;color:#9b793c;display:grid;place-items:center;font-size:17px}.stat strong{display:block;font-size:25px;margin:13px 0 4px}.stat small{color:var(--muted);font-size:10px}
+.stat{padding:18px;cursor:pointer;transition:transform .15s,border-color .15s}.stat:hover,.stat:focus-visible{border-color:var(--gold);transform:translateY(-2px);outline:2px solid #b8955533;outline-offset:2px}.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.stat-icon{width:34px;height:34px;border-radius:9px;background:#f4efe5;color:#9b793c;display:grid;place-items:center;font-size:17px}.stat strong{display:block;font-size:25px;margin:13px 0 4px}.stat small{color:var(--muted);font-size:10px}
 .two{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:18px}.panel{padding:20px}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.panel h3{font-size:14px;margin:0}.muted{font-size:11px;color:var(--muted)}
 .searchbox{display:flex;gap:8px;background:#f7f9fb;border:1px solid var(--line);padding:8px;border-radius:9px}.searchbox input{flex:1;border:0;outline:0;background:transparent;padding:7px;font-size:12px}
 .quickgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick{padding:15px;text-align:right;cursor:pointer;border:1px solid var(--line);color:var(--text)}.quick:hover{border-color:var(--gold);transform:translateY(-1px)}.quick b{display:block;font-size:12px;margin:7px 0}.quick span{font-size:19px;color:var(--gold)}.quick small{font-size:10px;color:var(--muted)}
@@ -57,10 +57,10 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 <section class="page active" id="dashboard">
   <div class="welcome"><div><h2>مرحباً بك في مكتبك القانوني الذكي</h2><p>إدارة المعرفة القانونية وتحليل القضايا وصياغة المستندات من مكان واحد.</p></div><button class="btn gold" onclick="showPage('assistant')">ابدأ استشارة قانونية ←</button></div>
   <div class="grid">
-    <div class="stat"><div class="stat-top">التشريعات المفهرسة <span class="stat-icon">§</span></div><strong>30</strong><small>سجلات أولية تحتاج استكمال النصوص</small></div>
-    <div class="stat"><div class="stat-top">نماذج العقود <span class="stat-icon">▧</span></div><strong>50+</strong><small>عناوين مفهرسة أولياً</small></div>
-    <div class="stat"><div class="stat-top">السوابق القضائية <span class="stat-icon">⚖</span></div><strong>694</strong><small>عدد الفهرس المعلن بالمصدر</small></div>
-    <div class="stat"><div class="stat-top">ملفات القضايا <span class="stat-icon">▤</span></div><strong>0</strong><small>أضف ملفاتك لبدء التحليل</small></div>
+    <div class="stat" role="button" tabindex="0" aria-label="فتح المكتبة التشريعية" onclick="showPage('library')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('library')}"><div class="stat-top">التشريعات المفهرسة <span class="stat-icon">§</span></div><strong id="statLaws">—</strong><small>اضغط لفتح المكتبة التشريعية</small></div>
+    <div class="stat" role="button" tabindex="0" aria-label="فتح نماذج العقود" onclick="showPage('contracts')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('contracts')}"><div class="stat-top">نماذج العقود <span class="stat-icon">▧</span></div><strong id="statContracts">—</strong><small>اضغط لفتح نماذج العقود</small></div>
+    <div class="stat" role="button" tabindex="0" aria-label="فتح السوابق القضائية" onclick="showPage('precedents')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('precedents')}"><div class="stat-top">السوابق القضائية <span class="stat-icon">⚖</span></div><strong id="statPrecedents">—</strong><small>اضغط لفتح فهرس السوابق</small></div>
+    <div class="stat" role="button" tabindex="0" aria-label="فتح ملفات القضايا" onclick="showPage('cases')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('cases')}"><div class="stat-top">ملفات القضايا <span class="stat-icon">▤</span></div><strong id="statCases">0</strong><small>اضغط لإضافة ملفات القضية</small></div>
   </div>
   <div class="two">
     <div class="panel"><div class="panel-head"><h3>البحث القانوني السريع</h3><span class="muted">بحث في المكتبة</span></div><div class="searchbox"><input id="dashSearch" placeholder="اكتب مسألة قانونية أو رقم مادة..." onkeydown="if(event.key==='Enter')searchLibrary()"><button class="btn" onclick="searchLibrary()">بحث</button></div><p class="muted" style="margin:12px 2px 0">سيتم ربط البحث الدلالي بالمكتبة التشريعية عند تشغيل الخادم وقاعدة البيانات.</p></div>
@@ -178,9 +178,19 @@ async function loadSectionData(section){
  }catch(e){box.innerHTML='<p>تعذر تحميل المكتبة: '+escapeHtml(e.message)+'</p>'}
 }
 async function loadLibraryStats(){
- try{const r=await fetch(API_BASE+'/api/library/stats'),d=await r.json();
-  const n=document.querySelector('#dashboard .grid .stat strong');if(n)n.textContent=d.total;
- }catch(e){}
+ try{
+  const r=await fetch(API_BASE+'/api/library/stats',{cache:'no-store'});
+  if(!r.ok)throw new Error('تعذر قراءة إحصاءات المكتبة');
+  const d=await r.json(),counts={};
+  (d.by_kind||[]).forEach(x=>counts[x.kind]=Number(x.n)||0);
+  const laws=['official_law','legal_library','index','law'].reduce((n,k)=>n+(counts[k]||0),0);
+  document.getElementById('statLaws').textContent=laws.toLocaleString('ar');
+  document.getElementById('statContracts').textContent=(counts.contract||0).toLocaleString('ar');
+  document.getElementById('statPrecedents').textContent=(counts.precedent||0).toLocaleString('ar');
+ }catch(e){
+  ['statLaws','statContracts','statPrecedents'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—'});
+  console.error('Library statistics:',e);
+ }
 }
 
 async function createDraft(){
