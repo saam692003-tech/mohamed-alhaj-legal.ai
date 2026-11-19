@@ -158,24 +158,42 @@ document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',(
 async function sendChat(){let input=document.getElementById('chatInput'),v=input.value.trim();if(!v)return;let box=document.getElementById('messages');let u=document.createElement('div');u.className='bubble human';u.textContent=v;box.appendChild(u);input.value='';let a=document.createElement('div');a.className='bubble bot';a.textContent='جارٍ البحث وإعداد الإجابة...';box.appendChild(a);box.scrollTop=box.scrollHeight;try{let r=await fetch(API_BASE+'/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:v})});let d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر تنفيذ الطلب');a.textContent=d.answer||'لم تصل إجابة.';if(d.sources&&d.sources.length){let src=document.createElement('div');src.style.marginTop='10px';src.innerHTML='<b>المصادر:</b><br>'+d.sources.map(s=>'<a target="_blank" rel="noopener" href="'+escapeHtml(s.url||'#')+'">'+escapeHtml(s.title)+'</a>').join('<br>');a.appendChild(src)}}catch(e){a.textContent='تعذر الاتصال بالخادم: '+e.message}box.scrollTop=box.scrollHeight}
 async function searchLibrary(){let q=document.getElementById('dashSearch').value.trim();showPage('library');document.getElementById('lawFilter').value=q;filterTable();if(q){let box=document.getElementById('librarySearchResults');if(!box){box=document.createElement('div');box.id='librarySearchResults';box.className='panel';document.getElementById('lawTable').parentElement.after(box)}box.innerHTML='جارٍ البحث في قاعدة البيانات...';try{let r=await fetch(API_BASE+'/api/search?q='+encodeURIComponent(q));let d=await r.json();box.innerHTML='<h3>نتائج البحث في المكتبة</h3>'+(d.results||[]).map(x=>'<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.excerpt||'')+'<br><a target="_blank" href="'+escapeHtml(x.url||'#')+'">المصدر</a></small></div></div>').join('')||'<p class="muted">لا توجد نتائج في قاعدة البيانات حالياً.</p>'}catch(e){box.textContent='تعذر الاتصال بالخادم.'}}} 
 
+function libraryItemHtml(x){
+ const source=x.source_url||x.url||'#',pdf=!!x.has_pdf;
+ const direct=pdf?'<a target="_blank" href="'+API_BASE+'/api/library/'+x.id+'/download">فتح / تنزيل PDF المحفوظ</a>':'<a target="_blank" href="'+escapeHtml(source)+'">المصدر الأصلي</a>';
+ return '<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.source_name)+' — '+escapeHtml(x.verification_status||'')+'<br>'+direct+' <a target="_blank" href="'+API_BASE+'/library/'+x.id+'/print">فتح النص الكامل / حفظ PDF</a><br><a target="_blank" rel="noopener" href="'+escapeHtml(source)+'">رابط المصدر المرجعي</a></small></div></div>';
+}
 async function loadSectionData(section){
  const map={library:{id:'libraryLive',kind:''},precedents:{id:'precedentsLive',kind:'precedent'},contracts:{id:'contractsLive',kind:'contract'}};
  if(!map[section])return;
  const cfg=map[section],box=document.getElementById(cfg.id);if(!box)return;
  box.innerHTML='<p class="muted">جارٍ جلب السجلات من قاعدة البيانات...</p>';
  try{
-  const url=API_BASE+'/api/library?limit=150&kind='+encodeURIComponent(cfg.kind);
-  const r=await fetch(url),d=await r.json();if(!r.ok)throw new Error('فشل تحميل المكتبة');
-  if(!d.items||!d.items.length){box.innerHTML='<p>لا توجد سجلات مفهرسة في هذا القسم حتى الآن.</p>';return}
+  const r=await fetch(API_BASE+'/api/library?limit=150&offset=0&kind='+encodeURIComponent(cfg.kind));
+  const d=await r.json();if(!r.ok)throw new Error('فشل تحميل المكتبة');
+  box.dataset.section=section;box.dataset.offset=String((d.items||[]).length);box.dataset.total=String(d.total||0);
   box.innerHTML='<div class="panel-head"><h3>السجلات المتاحة</h3><span class="muted">عدد السجلات: '+d.total+'</span></div>'+
-   d.items.map(x=>{
-    const source=x.source_url||x.url||'#';
-    const pdf=!!x.has_pdf;
-    const read='<a target="_blank" href="'+API_BASE+'/library/'+x.id+'/print">فتح النص الكامل / حفظ PDF</a>';
-    const direct=pdf?'<a target="_blank" href="'+API_BASE+'/api/library/'+x.id+'/download">فتح / تنزيل PDF المحفوظ</a>':'<a target="_blank" href="'+escapeHtml(source)+'">المصدر الأصلي</a>';
-    return '<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.source_name)+' — '+escapeHtml(x.verification_status||'')+'<br>'+direct+' '+read+'<br><a target="_blank" rel="noopener" href="'+escapeHtml(source)+'">رابط المصدر المرجعي</a></small></div></div>'
-   }).join('');
+   (d.items||[]).map(libraryItemHtml).join('')+
+   ((d.total||0)>(d.items||[]).length?'<button class="btn light" style="margin-top:12px" onclick="loadMoreLibrary(\''+section+'\')">تحميل المزيد</button>':'');
  }catch(e){box.innerHTML='<p>تعذر تحميل المكتبة: '+escapeHtml(e.message)+'</p>'}
+}
+async function loadMoreLibrary(section){
+ const map={library:'libraryLive',precedents:'precedentsLive',contracts:'contractsLive'};
+ const box=document.getElementById(map[section]);if(!box)return;
+ const offset=Number(box.dataset.offset||0),total=Number(box.dataset.total||0);
+ if(offset>=total)return;
+ const button=box.querySelector('button');if(button){button.disabled=true;button.textContent='جارٍ التحميل...'}
+ try{
+  const kind=section==='precedents'?'precedent':section==='contracts'?'contract':'';
+  const r=await fetch(API_BASE+'/api/library?limit=150&offset='+offset+'&kind='+encodeURIComponent(kind));
+  const d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر تحميل بقية السجلات');
+  if(button)button.insertAdjacentHTML('beforebegin',(d.items||[]).map(libraryItemHtml).join(''));
+  box.dataset.offset=String(offset+(d.items||[]).length);
+  if(button){
+   if(Number(box.dataset.offset)>=total)button.remove();
+   else{button.disabled=false;button.textContent='تحميل المزيد'}
+  }
+ }catch(e){if(button){button.disabled=false;button.textContent='إعادة المحاولة'};console.error(e)}
 }
 async function searchRemoteLibrary(kind,inputId,targetId){
  const q=document.getElementById(inputId).value.trim(),box=document.getElementById(targetId);
