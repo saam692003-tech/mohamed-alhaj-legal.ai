@@ -323,7 +323,8 @@ def ask(payload: AskRequest):
         answer=response.output_text or "لم يتم إنشاء إجابة."
         return {"answer":answer,"sources":[{"title":s["title"],"url":s["url"]} for s in sources]}
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"تعذر الاتصال بمحرك الذكاء الاصطناعي: {str(e)[:300]}")
+        print(f"OPENAI_ASK_FAILURE type={type(e).__name__} detail={str(e)[:500]}", flush=True)
+        raise HTTPException(status_code=502, detail=f"تعذر الاتصال بمحرك الذكاء الاصطناعي: {type(e).__name__}: {str(e)[:300]}")
 
 
 @app.post("/api/draft")
