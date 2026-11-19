@@ -140,14 +140,16 @@ def initial_source_import():
     try:
         with closing(db()) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) AS n FROM documents WHERE source_url<>'' AND is_active=1")
+                cur.execute("SELECT COUNT(*) AS n FROM crawl_runs WHERE status='complete' AND started_at::timestamptz > NOW() - INTERVAL '6 days'")
                 done=cur.fetchone()["n"]
         if done:
+            print("Recent complete legal-source crawl found; skipping startup import.", flush=True)
             return
         from official_sources import crawl_all
-        crawl_all(max_pages=int(os.getenv("CRAWL_MAX_PAGES","1200")), delay=float(os.getenv("CRAWL_DELAY","1.0")))
+        result=crawl_all(max_pages=int(os.getenv("CRAWL_MAX_PAGES","1200")), delay=float(os.getenv("CRAWL_DELAY","1.0")))
+        print(f"Initial legal source import: {result}", flush=True)
     except Exception as exc:
-        print(f"Initial legal source import failed: {exc}")
+        print(f"Initial legal source import failed: {type(exc).__name__}: {exc}", flush=True)
 
 def seed_sources():
     seeds = [
@@ -220,7 +222,7 @@ async def analyze_case_files(files: list[UploadFile] = File(...)):
             from openai import OpenAI
             refs=search_docs(combined[:6000],8)
             context="\n\n".join(f"{x['title']} | {x['url']}\n{x['excerpt']}" for x in refs)
-            client=OpenAI(api_key=OPENAI_API_KEY)
+            client=OpenAI(api_key=OPENAI_API_KEY, timeout=45.0, max_retries=2)
             response=client.responses.create(
                 model=CHAT_MODEL,
                 instructions="أنت محلل قانوني يمني. حلل المستندات المقدمة فقط، افصل الوقائع والطلبات والأدلة والتواريخ والتناقضات والدفوع المحتملة. لا تختلق مواد قانونية أو وقائع. حدد ما يحتاج إلى مراجعة.",
@@ -323,7 +325,7 @@ def ask(payload: AskRequest):
         answer=response.output_text or "لم يتم إنشاء إجابة."
         return {"answer":answer,"sources":[{"title":s["title"],"url":s["url"]} for s in sources]}
     except Exception as e:
-        print(f"OPENAI_ASK_FAILURE type={type(e).__name__} detail={str(e)[:500]}", flush=True)
+        print(f"OPENAI_ASK_FAILURE type={type(e).__name__} detail={str(e)[:500]} cause={repr(e.__cause__ or e.__context__)}", flush=True)
         raise HTTPException(status_code=502, detail=f"تعذر الاتصال بمحرك الذكاء الاصطناعي: {type(e).__name__}: {str(e)[:300]}")
 
 
