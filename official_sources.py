@@ -96,8 +96,10 @@ def crawl_all(max_pages=1200,delay=1.0):
       reader=PdfReader(io.BytesIO(raw))
       body="\n".join(page.extract_text() or "" for page in reader.pages).strip()
      except Exception: body=""
+     kind=classify(url,title)
+     if kind=="official_law" and default_kind=="precedent": kind="precedent"
      with db() as conn:
-      with conn.cursor() as cur: save(cur,title,body or "ملف PDF محفوظ من المصدر الأصلي.",url,"pdf",source,raw,"application/pdf")
+      with conn.cursor() as cur: save(cur,title,body or "ملف PDF محفوظ من المصدر الأصلي.",url,kind,source,raw,"application/pdf")
       conn.commit()
      saved+=1; total_saved+=1; pages+=1; source_pages+=1; time.sleep(delay); continue
     if "html" not in ct and not r.text.lstrip().startswith("<"): continue
