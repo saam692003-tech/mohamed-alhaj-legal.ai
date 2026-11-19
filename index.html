@@ -49,7 +49,7 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
     <button data-page="contracts"><span class="ico">▧</span>العقود والصيغ</button>
     <button data-page="settings"><span class="ico">⚙</span>الإعدادات</button>
   </nav>
-  <div class="sidebar-foot">نسخة أولية تجريبية<br>المالك: محمد الحاج<br>© 2026 Mohamed Al-Hajj Legal AI</div>
+  <div class="sidebar-foot">نسخة تشغيل متصلة بالخادم<br>المالك: محمد الحاج<br>© 2026 Mohamed Al-Hajj Legal AI</div>
 </aside>
 <main class="main">
 <header class="topbar"><div><div class="top-title" id="topTitle">لوحة التحكم</div><div class="top-sub">مساحة العمل القانونية الخاصة بك</div></div><div class="user"><div class="avatar">م ح</div><div><b>محمد الحاج</b><div class="muted">مدير المنصة</div></div></div></header>
@@ -74,14 +74,14 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
   <div class="panel"><div class="panel-head"><h3>آخر التحديثات</h3><span class="muted">حالة المشروع</span></div>
     <div class="activity"><i class="dot"></i><div>إنشاء الهيكل الأولي لواجهة المنصة<small>تم — النسخة التجريبية الأولى</small></div></div>
     <div class="activity"><i class="dot"></i><div>إعداد فهرس تأسيسي للقوانين والعقود والسوابق<small>تم — يحتاج مراجعة واستكمال المصادر</small></div></div>
-    <div class="activity"><i class="dot"></i><div>ربط محرك الذكاء الاصطناعي وقاعدة البيانات<small>المرحلة التالية — لم يتم الربط بعد</small></div></div>
+    <div class="activity"><i class="dot"></i><div>ربط محرك الذكاء الاصطناعي وقاعدة البيانات<small>الواجهة تستدعي واجهات الخادم — يلزم اختبار مفتاح الخدمة والوظائف</small></div></div>
   </div>
 </section>
 
 <section class="page" id="assistant">
-  <h2 class="section-title">المستشار القانوني الذكي</h2><p class="section-desc">واجهة المحادثة الأولية للوكيل القانوني. في هذه النسخة، المحادثة تجريبية ولم تُربط بعد بواجهة OpenAI API أو بقاعدة تشريعية حية.</p>
-  <div class="chatbox"><div class="chat-head"><b>المحامي الافتراضي — القانون اليمني</b><span class="muted">نسخة واجهة تجريبية</span></div>
-  <div class="chat-messages" id="messages"><div class="bubble bot">مرحباً بك. اكتب سؤالك القانوني أو حدد المهمة التي تريد إنجازها. عند ربط محرك الذكاء الاصطناعي سأتمكن من البحث في النصوص والمراجع المعتمدة.</div></div>
+  <h2 class="section-title">المستشار القانوني الذكي</h2><p class="section-desc">محادثة مباشرة مع محرك الذكاء الاصطناعي عبر الخادم، مع استرجاع المراجع المتاحة في المكتبة القانونية.</p>
+  <div class="chatbox"><div class="chat-head"><b>المستشار القانوني — القانون اليمني</b><span class="muted">اتصال عبر الخادم</span></div>
+  <div class="chat-messages" id="messages"><div class="bubble bot">مرحباً بك. اكتب سؤالك القانوني. سيبحث المحرك في السجلات المتاحة ويعرض المراجع التي استند إليها.</div></div>
   <div class="chat-input"><input id="chatInput" placeholder="اكتب سؤالك القانوني هنا..." onkeydown="if(event.key==='Enter')sendChat()"><button class="btn" onclick="sendChat()">إرسال</button></div></div>
   <div class="notice">يجب أن تستند الإجابات القانونية النهائية إلى النصوص الرسمية النافذة، مع مراجعة المحامي قبل اعتماد أي مذكرة أو إجراء.</div>
 </section>
@@ -102,8 +102,8 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 </section>
 
 <section class="page" id="cases">
-  <h2 class="section-title">تحليل القضايا والمستندات</h2><p class="section-desc">مساحة مخصصة لرفع ملف القضية وتجهيز التحليل. الرفع في هذه النسخة محلي داخل المتصفح ولا يرسل الملفات إلى خادم.</p>
-  <div class="panel"><h3>ملف القضية</h3><p class="muted">اختر مستندات القضية لعرض أسمائها وتجهيزها للمرحلة البرمجية التالية.</p><div class="formrow"><input type="file" id="caseFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"></div><div id="fileList" class="muted">لم يتم اختيار ملفات.</div><div class="notice">ستشمل النسخة المتصلة لاحقاً استخراج الوقائع والطلبات والأدلة، ورصد التناقضات، وربط كل دفع بالنص القانوني ومصدره.</div><button class="btn" id="caseAnalyzeButton" onclick="analyzeCaseFiles()">رفع الملفات وبدء التحليل</button><div id="caseAnalysisResult" class="panel" style="display:none;margin-top:16px;white-space:pre-wrap;line-height:2"></div></div>
+  <h2 class="section-title">تحليل القضايا والمستندات</h2><p class="section-desc">ارفع مستندات القضية إلى الخادم لاستخراج النصوص وتحليل الوقائع والدفوع والمراجع. الصيغ المدعومة PDF وDOCX وTXT.</p>
+  <div class="panel"><h3>ملف القضية</h3><p class="muted">اختر ملفات PDF أو DOCX أو TXT، بحد أقصى 15 ميغابايت للملف.</p><div class="formrow"><input type="file" id="caseFiles" multiple accept=".pdf,.docx,.txt"></div><div id="fileList" class="muted">لم يتم اختيار ملفات.</div><div class="notice">يرسل النظام الملفات إلى الخادم لاستخراج النصوص، ثم يحللها بالذكاء الاصطناعي عند توافر مفتاح الخدمة.</div><button class="btn" id="caseAnalyzeButton" onclick="analyzeCaseFiles()">رفع الملفات وبدء التحليل</button><div id="caseAnalysisResult" class="panel" style="display:none;margin-top:16px;white-space:pre-wrap;line-height:2"></div><div id="caseRecords" class="panel" style="margin-top:16px"></div></div>
 </section>
 
 <section class="page" id="drafting">
@@ -130,12 +130,12 @@ footer{text-align:center;color:#9aa6b2;font-size:10px;padding:28px 0 10px}
 
 <section class="page" id="precedents"><div id="precedentsLive" class="panel"><h3>فهرس المحكمة العليا والمصادر</h3><p class="muted">جارٍ تحميل الفهرس...</p></div>
   <h2 class="section-title">السوابق القضائية</h2><p class="section-desc">فهرس للبحث في المبادئ والأحكام القضائية اليمنية مع توثيق المحكمة ورقم الحكم وتاريخه ومصدر النشر.</p>
-  <div class="panel"><div class="searchbox"><input placeholder="ابحث بموضوع السابقة أو رقم الحكم..."><button class="btn" onclick="alert('سيتم تفعيل البحث بعد إدخال بيانات السوابق وفهرستها.')">بحث</button></div><div class="notice">رابط المصدر: <a href="https://www.yemenilaw.com/library/judicial-precedents/" target="_blank">مكتبة السوابق القضائية في Yemenilaw</a>. العدد المعروض في الفهرس يحتاج إعادة تحقق عند الاستيراد.</div></div>
+  <div class="panel"><div class="searchbox"><input id="precedentSearch" placeholder="ابحث بموضوع السابقة أو رقم الحكم..." onkeydown="if(event.key==='Enter')searchRemoteLibrary('precedent','precedentSearch','precedentResults')"><button class="btn" onclick="searchRemoteLibrary('precedent','precedentSearch','precedentResults')">بحث</button></div><div id="precedentResults"></div><div class="notice">رابط المصدر: <a href="https://www.yemenilaw.com/library/judicial-precedents/" target="_blank">مكتبة السوابق القضائية في Yemenilaw</a>. العدد المعروض في الفهرس يحتاج إعادة تحقق عند الاستيراد.</div></div>
 </section>
 
 <section class="page" id="contracts"><div id="contractsLive" class="panel"><h3>فهرس العقود والصيغ</h3><p class="muted">جارٍ تحميل الفهرس...</p></div>
   <h2 class="section-title">العقود والصيغ القانونية</h2><p class="section-desc">تصنيف النماذج القانونية تمهيداً لبناء مكتبة قابلة للبحث والتخصيص.</p>
-  <div class="cards3">
+  <div class="panel"><div class="searchbox"><input id="contractSearch" placeholder="ابحث في العقود والصيغ..." onkeydown="if(event.key==='Enter')searchRemoteLibrary('contract','contractSearch','contractResults')"><button class="btn" onclick="searchRemoteLibrary('contract','contractSearch','contractResults')">بحث</button></div><div id="contractResults"></div></div><div class="cards3">
     <div class="feature"><div class="big">▧</div><h3>العقود المدنية</h3><p>البيع والإيجار والقرض والمقاولة والهبة والوكالة.</p></div>
     <div class="feature"><div class="big">§</div><h3>العقود التجارية</h3><p>الشراكة والتنازل والحصص والوكالة التجارية والديون.</p></div>
     <div class="feature"><div class="big">⚖</div><h3>الصيغ القضائية</h3><p>الدعاوى والشكاوى والإقرارات والتعهدات والطلبات.</p></div>
@@ -177,6 +177,26 @@ async function loadSectionData(section){
    }).join('');
  }catch(e){box.innerHTML='<p>تعذر تحميل المكتبة: '+escapeHtml(e.message)+'</p>'}
 }
+async function searchRemoteLibrary(kind,inputId,targetId){
+ const q=document.getElementById(inputId).value.trim(),box=document.getElementById(targetId);
+ if(!q){box.innerHTML='<p class="muted">اكتب عبارة البحث أولاً.</p>';return}
+ box.innerHTML='<p class="muted">جارٍ البحث في قاعدة البيانات...</p>';
+ try{
+  const url=API_BASE+'/api/library?q='+encodeURIComponent(q)+'&kind='+encodeURIComponent(kind)+'&limit=100';
+  const r=await fetch(url),d=await r.json();if(!r.ok)throw new Error(d.detail||'فشل البحث');
+  if(!d.items||!d.items.length){box.innerHTML='<p class="muted">لا توجد نتائج مطابقة في المكتبة حالياً.</p>';return}
+  box.innerHTML='<p class="muted">عدد النتائج: '+d.total+'</p>'+d.items.map(x=>{
+   const src=x.source_url||x.url||'#';
+   return '<div class="activity"><i class="dot"></i><div><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.source_name||'')+' — '+escapeHtml(x.verification_status||'')+'<br><a target="_blank" rel="noopener" href="'+API_BASE+'/library/'+x.id+'/print">فتح النص المفهرس</a> · <a target="_blank" rel="noopener" href="'+escapeHtml(src)+'">المصدر</a></small></div></div>';
+  }).join('');
+ }catch(e){box.innerHTML='<p>تعذر البحث: '+escapeHtml(e.message)+'</p>'}
+}
+async function loadCaseFiles(){
+ const box=document.getElementById('caseRecords');if(!box)return;
+ try{const r=await fetch(API_BASE+'/api/cases');const d=await r.json();if(!r.ok)throw new Error('فشل تحميل الملفات');
+ box.innerHTML='<h3>الملفات المحفوظة</h3>'+((d.items||[]).map(x=>'<div class="activity"><i class="dot"></i><div>'+escapeHtml(x.filename)+'<small>'+escapeHtml(x.created_at||'')+'</small></div></div>').join('')||'<p class="muted">لا توجد ملفات محفوظة بعد.</p>');
+ }catch(e){box.textContent='تعذر تحميل الملفات المحفوظة: '+e.message}
+}
 async function loadLibraryStats(){
  try{
   const r=await fetch(API_BASE+'/api/library/stats',{cache:'no-store'});
@@ -203,7 +223,7 @@ async function analyzeCaseFiles(){
   const d=await r.json();if(!r.ok)throw new Error(d.detail||'تعذر تحليل الملفات');
   status.textContent='تمت معالجة الملفات: '+d.files.map(x=>x.filename).join('، ')+'\n\n'+d.analysis;
  }catch(e){status.textContent='تعذر إتمام العملية: '+e.message}
- finally{button.disabled=false}
+ finally{button.disabled=false;loadCaseFiles()}
 }
 async function createDraft(){
  const status=document.getElementById('draftStatus'),button=document.getElementById('draftButton');
@@ -233,7 +253,7 @@ function printDraft(){
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function filterTable(){let q=(document.getElementById('lawFilter').value||'').toLowerCase();document.querySelectorAll('#lawTable tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')}
 async function ingestText(){let status=document.getElementById('ingestStatus');status.textContent='جارٍ الحفظ...';try{let r=await fetch(API_BASE+'/api/ingest/text',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':document.getElementById('adminToken').value},body:JSON.stringify({title:document.getElementById('ingestTitle').value,text:document.getElementById('ingestText').value,url:document.getElementById('ingestUrl').value,kind:'legal_source'})});let d=await r.json();status.textContent=r.ok?'تمت الإضافة إلى المكتبة.':(d.detail||'تعذر الحفظ')}catch(e){status.textContent='تعذر الاتصال بالخادم.'}}
-loadLibraryStats();loadSectionData('library');loadSectionData('precedents');loadSectionData('contracts');
+loadLibraryStats();loadSectionData('library');loadSectionData('precedents');loadSectionData('contracts');loadCaseFiles();
 document.getElementById('caseFiles').addEventListener('change',e=>{let files=[...e.target.files];document.getElementById('fileList').textContent=files.length?files.map(f=>f.name+' ('+Math.round(f.size/1024)+' KB)').join('، '):'لم يتم اختيار ملفات.'});
 </script>
 </body></html>
