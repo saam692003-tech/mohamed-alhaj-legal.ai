@@ -140,7 +140,7 @@ def initial_source_import():
     try:
         with closing(db()) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) AS n FROM crawl_runs WHERE status='complete' AND started_at::timestamptz > NOW() - INTERVAL '6 days'")
+                cur.execute("SELECT COUNT(*) AS n FROM crawl_runs WHERE status='complete' AND started_at::timestamptz > NOW() - INTERVAL '6 days' AND detail LIKE %s", ("%وزارة العدل وحقوق الإنسان اليمنية%",))
                 done=cur.fetchone()["n"]
         if done:
             print("Recent complete legal-source crawl found; skipping startup import.", flush=True)
