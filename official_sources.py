@@ -63,6 +63,7 @@ def save(cur,title,body,url,kind,source,pdf=None,content_type="text/html"):
 def crawl_all(max_pages=1200,delay=1.0):
  s=requests.Session(); s.headers.update({"User-Agent":UA,"Accept":"text/html,application/pdf,*/*"})
  started=now()
+ print(f"Starting legal crawl: {len(SOURCES)} sources, page budget={max_pages}", flush=True)
  with db() as conn:
   with conn.cursor() as cur:
    cur.execute("INSERT INTO crawl_runs(started_at,status,detail) VALUES(%s,'running','مزامنة المصادر القانونية اليمنية') RETURNING id",(started,))
@@ -70,6 +71,7 @@ def crawl_all(max_pages=1200,delay=1.0):
   conn.commit()
  total_saved=0; pages=0; errors=0; runs=[]
  for root,source,default_kind in SOURCES:
+  print(f"Legal crawl source started: {source} ({root})", flush=True)
   rp=robots(s,root); queue=[root+"/"]
   # Known landing pages often expose document catalogs.
   queue += [root+p for p in ["/library","/laws","/legislation","/library/yemeni-laws/","/library/judicial-precedents/","/contracts/"]]
@@ -123,6 +125,7 @@ def crawl_all(max_pages=1200,delay=1.0):
    except Exception as e:
     err+=1; errors+=1
   runs.append({"source":source,"pages":len(seen),"saved":saved,"errors":err})
+  print(f"Legal crawl source finished: {source}; visited={len(seen)} saved={saved} errors={err}", flush=True)
  status="complete" if errors==0 else "partial"
  with db() as conn:
   with conn.cursor() as cur:
@@ -130,7 +133,9 @@ def crawl_all(max_pages=1200,delay=1.0):
    cur.execute("UPDATE crawl_runs SET finished_at=%s,status=%s,pages_seen=%s,pages_saved=%s,errors=%s,detail=%s WHERE id=%s",
                (now(),status,pages,total_saved,errors,str(runs)[:4000],run_id))
   conn.commit()
- return {"run_id":run_id,"status":status,"pages_seen":pages,"documents_saved":total_saved,"errors":errors,"sources":runs}
+ result={"run_id":run_id,"status":status,"pages_seen":pages,"documents_saved":total_saved,"errors":errors,"sources":runs}
+ print(f"Legal crawl finished: {result}", flush=True)
+ return result
 def index_catalogs():
  return {"note":"All accessible same-domain pages and PDF files are crawled by crawl_all."}
 if __name__=="__main__": print(crawl_all(int(os.getenv("CRAWL_MAX_PAGES","1200")),float(os.getenv("CRAWL_DELAY","1.0"))))
