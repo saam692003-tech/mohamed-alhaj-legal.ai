@@ -22,7 +22,7 @@ def now(): return datetime.now(timezone.utc).isoformat(timespec="seconds")
 def robots(session,root):
  rp=urllib.robotparser.RobotFileParser()
  try:
-  r=session.get(root+"/robots.txt",timeout=15)
+  r=session.get(root+"/robots.txt",timeout=6)
   if r.status_code==404: rp.parse([])
   else: r.raise_for_status(); rp.parse(r.text.splitlines())
  except requests.RequestException:
@@ -66,6 +66,7 @@ def crawl_all(max_pages=1200,delay=1.0):
  print(f"Starting legal crawl: {len(SOURCES)} sources, page budget={max_pages}", flush=True)
  with db() as conn:
   with conn.cursor() as cur:
+   cur.execute("UPDATE crawl_runs SET status='interrupted',finished_at=%s,detail=COALESCE(detail,'') || ' | أوقفه نشر جديد' WHERE status='running'",(started,))
    cur.execute("INSERT INTO crawl_runs(started_at,status,detail) VALUES(%s,'running','مزامنة المصادر القانونية اليمنية') RETURNING id",(started,))
    run_id=cur.fetchone()["id"]
   conn.commit()
@@ -77,7 +78,7 @@ def crawl_all(max_pages=1200,delay=1.0):
   queue += [root+p for p in ["/library","/laws","/legislation","/library/yemeni-laws/","/library/judicial-precedents/","/contracts/"]]
   if "moj.gov.ye" in root:
    queue += [root+p for p in ["/LawsM","/Home/LawsM"]]
-  seen=set(); saved=0; err=0; source_pages=0
+  seen=set(); saved=0; err=0; source_pages=0; consecutive_errors=0
   per_source_limit=max(100,int(max_pages/len(SOURCES)))
   while queue and source_pages<per_source_limit:
    url=queue.pop(0)
@@ -87,9 +88,10 @@ def crawl_all(max_pages=1200,delay=1.0):
    if p.scheme not in ("http","https") or p.netloc.lower() not in (urllib.parse.urlsplit(root).netloc.lower(),): continue
    if not rp.can_fetch(UA,url): continue
    try:
-    r=s.get(url,timeout=35); 
+    r=s.get(url,timeout=12); 
     if r.status_code in (403,404,410): continue
     r.raise_for_status()
+    consecutive_errors=0
     ct=r.headers.get("Content-Type","").lower()
     if "pdf" in ct or p.path.lower().endswith(".pdf"):
      title=urllib.parse.unquote(p.path.rsplit("/",1)[-1]) or "وثيقة قانونية PDF"
@@ -122,8 +124,14 @@ def crawl_all(max_pages=1200,delay=1.0):
       if hp.path.lower().endswith((".pdf",".html",".htm")) or hp.path in ("/",) or hp.path.lower().endswith((".php",".aspx")) or any(k in (hp.path+hp.query).lower() for k in ["law","leg","court","judg","preced","contract","library","download","file","attachment","قانون","قض","حكم","عقد","تنزيل","ملف"]):
        if href not in seen and href not in queue: queue.append(href)
     pages+=1; source_pages+=1; time.sleep(delay)
+    if source_pages and source_pages % 25 == 0:
+     print(f"Legal crawl progress: {source}; pages={source_pages} saved={saved}", flush=True)
    except Exception as e:
-    err+=1; errors+=1
+    err+=1; errors+=1; consecutive_errors+=1
+    print(f"Legal crawl request failed: {source} {url}: {type(e).__name__}: {e}", flush=True)
+    if consecutive_errors >= 3:
+     print(f"Stopping this source after 3 consecutive connection errors: {source}", flush=True)
+     break
   runs.append({"source":source,"pages":len(seen),"saved":saved,"errors":err})
   print(f"Legal crawl source finished: {source}; visited={len(seen)} saved={saved} errors={err}", flush=True)
  status="complete" if errors==0 else "partial"
