@@ -9,6 +9,7 @@ from pypdf import PdfReader
 
 DATABASE_URL=os.getenv("DATABASE_URL","")
 SOURCES=[
+ ("https://moj.gov.ye","وزارة العدل وحقوق الإنسان اليمنية","official_law"),
  ("https://www.agoye.gov.ye","النيابة العامة اليمنية","official_law"),
  ("https://www.sc-yemen.com","المحكمة العليا اليمنية","precedent"),
  ("https://www.yemenilaw.com","الموقع القانوني اليمني","legal_library"),
@@ -33,8 +34,7 @@ def text_of(soup):
  return "\n".join(re.sub(r"\s+"," ",s).strip() for s in main.stripped_strings if s.strip())
 def classify(url,title):
  u=(url+" "+title).lower()
- if ".pdf" in url.lower(): return "pdf"
- if any(x in u for x in ["precedent","judgment","court","قض","حكم","مبدأ"]): return "precedent"
+ if any(x in u for x in ["precedent","judgment","court","قض","حكم","مبدأ","سوابق","مبادئ"]): return "precedent"
  if any(x in u for x in ["contract","agreement","عقد","اتفاق","صيغة","نموذج"]): return "contract"
  return "official_law"
 def save(cur,title,body,url,kind,source,pdf=None,content_type="text/html"):
@@ -73,8 +73,11 @@ def crawl_all(max_pages=1200,delay=1.0):
   rp=robots(s,root); queue=[root+"/"]
   # Known landing pages often expose document catalogs.
   queue += [root+p for p in ["/library","/laws","/legislation","/library/yemeni-laws/","/library/judicial-precedents/","/contracts/"]]
-  seen=set(); saved=0; err=0
-  while queue and pages<max_pages:
+  if "moj.gov.ye" in root:
+   queue += [root+p for p in ["/LawsM","/Home/LawsM"]]
+  seen=set(); saved=0; err=0; source_pages=0
+  per_source_limit=max(100,int(max_pages/len(SOURCES)))
+  while queue and source_pages<per_source_limit:
    url=queue.pop(0)
    if url in seen: continue
    seen.add(url)
@@ -96,7 +99,7 @@ def crawl_all(max_pages=1200,delay=1.0):
      with db() as conn:
       with conn.cursor() as cur: save(cur,title,body or "ملف PDF محفوظ من المصدر الأصلي.",url,"pdf",source,raw,"application/pdf")
       conn.commit()
-     saved+=1; total_saved+=1; pages+=1; time.sleep(delay); continue
+     saved+=1; total_saved+=1; pages+=1; source_pages+=1; time.sleep(delay); continue
     if "html" not in ct and not r.text.lstrip().startswith("<"): continue
     soup=BeautifulSoup(r.text,"html.parser")
     title_node=soup.find("h1") or soup.find("h2") or soup.title
@@ -112,9 +115,9 @@ def crawl_all(max_pages=1200,delay=1.0):
      href=urllib.parse.urldefrag(urllib.parse.urljoin(url,a["href"]))[0]
      hp=urllib.parse.urlsplit(href)
      if hp.scheme in ("http","https") and hp.netloc.lower()==p.netloc.lower():
-      if hp.path.lower().endswith((".pdf",".html",".htm")) or hp.path in ("/",) or hp.path.lower().endswith((".php",".aspx")) or any(k in (hp.path+hp.query).lower() for k in ["law","leg","court","judg","preced","contract","library","قانون","قض","حكم","عقد"]):
+      if hp.path.lower().endswith((".pdf",".html",".htm")) or hp.path in ("/",) or hp.path.lower().endswith((".php",".aspx")) or any(k in (hp.path+hp.query).lower() for k in ["law","leg","court","judg","preced","contract","library","download","file","attachment","قانون","قض","حكم","عقد","تنزيل","ملف"]):
        if href not in seen and href not in queue: queue.append(href)
-    pages+=1; time.sleep(delay)
+    pages+=1; source_pages+=1; time.sleep(delay)
    except Exception as e:
     err+=1; errors+=1
   runs.append({"source":source,"pages":len(seen),"saved":saved,"errors":err})
